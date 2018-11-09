@@ -46,6 +46,24 @@ class CIGAR #CIGARをパーズする。
 	end
 end
 
+class REF
+
+	attr_accessor :refseq
+	
+	def initialize(ref_raw)
+		parse(ref_raw)
+	end
+	
+	def parse(ref_raw)
+		@refseq = Hash.new
+		ref_raw.each do |f|
+			@refseq[f.definition] = f.seq
+#			print "@refseq[#{f.definition}] = \"#{@refseq[f.definition]}\"\n"
+		end
+	end
+end
+
+
 def base2num(base)
 	case base 
 		when "A", "a" then
@@ -82,9 +100,21 @@ params = ARGV.getopts("k:")
 kmer_size = params.find{|k, v| k == "k"}[1].to_i
 kmer_size = 3 if kmer_size == 0
 
-ref = Bio::FlatFile.open(Bio::FastaFormat, ARGV[1])
+
+print "read reference file : #{ARGV[1]}\n"
+
+ref_raw = Bio::FlatFile.open(Bio::FastaFormat, ARGV[1])
 samfile = File.open(ARGV[0], "r")
 kmer_mtx = Array.new(5 ** kmer_size).map{Array.new(5 ** kmer_size, 0)}
+
+ref = REF.new(ref_raw)
+print "finish reading reference file\n"
+print "reference chromosome are\n==========\n"
+
+ref.refseq.each do |k, v|
+	print "\"#{k}\"\n"
+end
+print "==========\n"
 
 
 samfile.each do |line|
@@ -93,12 +123,24 @@ samfile.each do |line|
 	next if sam.rname == "*"
 	cigar = CIGAR.new(sam.cigar)
 	ref_subseq = String.new
+	ref_entireseq = String.new
+	ref_entireseq = ref.refseq[sam.rname]
+	unless ref_entireseq
+		print "sam.rname = \"#{sam.rname}\"\n"
+		puts
+		break
+	end
+	
 	query_subseq = String.new
-	ref_subseq = ref.find{|chr| chr.definition == sam.rname}.seq[sam.pos.to_i, sam.seq.to_s.length]
-	p ref_subseq[0, 10]
-	next
-#	p `ps -o rss= -p #{Process.pid}`.to_i
+	ref_subseq = ref_entireseq[sam.pos.to_i, sam.seq.to_s.length]
+	unless ref_subseq
+		p ref_entireseq 
+		puts
+		break
+	end
+
 	query_subseq = sam.seq[cigar.cigarOp[0].length, sam.seq.length - 1]
+
 	ref_aligned = String.new
 	query_aligned = String.new
 	i = 1
@@ -121,8 +163,7 @@ samfile.each do |line|
 		end
 		i = i + 1
 	end
-	
-
+	print "#{sam.qname}, #{sam.rname}\n#{ref_aligned[0, 100]}\n#{query_aligned[0, 100]}\n\n"	
 	i = 0
 	while ref_aligned[i + kmer_size] != nil do
 		ref_idx = bases2coordinate(ref_aligned[i, kmer_size])
@@ -131,3 +172,10 @@ samfile.each do |line|
 		i = i + 1
 	end
 end
+kmer_mtx.each do |f|
+	f.each do |g|
+		print "#{g}, "
+	end
+	puts
+end
+
