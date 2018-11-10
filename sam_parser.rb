@@ -174,7 +174,7 @@ samfile.each do |line|
 end
 kmer_mtx.each do |f|
 	f.each do |g|
-		print "#{g}, "
+		printf("%4d, ", g)
 	end
 	puts
 end
