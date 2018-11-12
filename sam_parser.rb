@@ -121,6 +121,7 @@ samfile.each do |line|
 	next if line[/^@/]
 	sam = SAM.new(line)
 	next if sam.rname == "*"
+	next if sam.seq   == "*"
 	cigar = CIGAR.new(sam.cigar)
 	ref_subseq = String.new
 	ref_entireseq = String.new
@@ -131,19 +132,23 @@ samfile.each do |line|
 		break
 	end
 	
-	query_subseq = String.new
-	ref_subseq = ref_entireseq[sam.pos.to_i, sam.seq.to_s.length]
+	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i - 1]
 	unless ref_subseq
 		p ref_entireseq 
 		puts
 		break
 	end
 
-	query_subseq = sam.seq[cigar.cigarOp[0].length, sam.seq.length - 1]
-
+	query_subseq = String.new
+	if cigar.cigarOp[0].type == "S" then
+		query_subseq = sam.seq[cigar.cigarOp[0].length, sam.seq.length - 1]
+	else
+		query_subseq = sam.seq[0, sam.seq.length - 1]
+	end
+#	print "query_subseq : #{query_subseq}\nref_subseq   : #{ref_subseq}\n"
 	ref_aligned = String.new
 	query_aligned = String.new
-	i = 1
+	i = 0
 	while cigar.cigarOp[i] != nil do
 		cutlen = cigar.cigarOp[i].length
 		case cigar.cigarOp[i].type
@@ -157,13 +162,13 @@ samfile.each do |line|
 				ref_aligned << ref_subseq.slice!(0..cutlen - 1)
 				query_aligned << "*" * cutlen
 			when "S" then
-				
+
 			else
 				break
 		end
 		i = i + 1
 	end
-	print "#{sam.qname}, #{sam.rname}\n#{ref_aligned[0, 100]}\n#{query_aligned[0, 100]}\n\n"	
+#	print "#{sam.qname}, #{sam.rname}\n#{ref_aligned[0, 100]}\n#{query_aligned[0, 100]}\n\n"	
 	i = 0
 	while ref_aligned[i + kmer_size] != nil do
 		ref_idx = bases2coordinate(ref_aligned[i, kmer_size])
@@ -172,6 +177,8 @@ samfile.each do |line|
 		i = i + 1
 	end
 end
+
+
 kmer_mtx.each do |f|
 	f.each do |g|
 		printf("%4d, ", g)
