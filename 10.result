@@ -1,0 +1,75 @@
+read reference file : 10.ref
+finish reading reference file
+reference chromosome are
+==========
+"testref"
+==========
+query_subseq   : "CGTCTATTCC"
+ref_subseq     : "CGACTATTCC"
+query_aligned  : "CGTCTATTCC"
+ref_aligned    : "CGACTATTCC"
+
+>ref_previous   : CG
+ query_previous : CG
+ previous_str   : CGCG
+ ref_nxt        : A     
+ query_nxt      : T     
+ nxt_str        : AT
+ previous_idx   : 182
+ nxt_idx        : 3
+>ref_previous   : GA
+ query_previous : GT
+ previous_str   : GAGT
+ ref_nxt        : C     
+ query_nxt      : C     
+ nxt_str        : CC
+ previous_idx   : 263
+ nxt_idx        : 6
+>ref_previous   : AC
+ query_previous : TC
+ previous_str   : ACTC
+ ref_nxt        : T     
+ query_nxt      : T     
+ nxt_str        : TT
+ previous_idx   : 41
+ nxt_idx        : 18
+>ref_previous   : CT
+ query_previous : CT
+ previous_str   : CTCT
+ ref_nxt        : A     
+ query_nxt      : A     
+ nxt_str        : AA
+ previous_idx   : 208
+ nxt_idx        : 0
+>ref_previous   : TA
+ query_previous : TA
+ previous_str   : TATA
+ ref_nxt        : T     
+ query_nxt      : T     
+ nxt_str        : TT
+ previous_idx   : 390
+ nxt_idx        : 18
+>ref_previous   : AT
+ query_previous : AT
+ previous_str   : ATAT
+ ref_nxt        : T     
+ query_nxt      : T     
+ nxt_str        : TT
+ previous_idx   : 78
+ nxt_idx        : 18
+>ref_previous   : TT
+ query_previous : TT
+ previous_str   : TTTT
+ ref_nxt        : C     
+ query_nxt      : C     
+ nxt_str        : CC
+ previous_idx   : 468
+ nxt_idx        : 6
+>ref_previous   : TC
+ query_previous : TC
+ previous_str   : TCTC
+ ref_nxt        : C     
+ query_nxt      : C     
+ nxt_str        : CC
+ previous_idx   : 416
+ nxt_idx        : 6

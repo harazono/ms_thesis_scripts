@@ -11,7 +11,7 @@ def simread(ref)
 	read = String.new
 	i = 0
 	while ref[i] != nil do
-		case rand(100)
+		case rand(20)
 			when 1 then
 				tmp = ref[i]
 				while tmp == ref[i] do
@@ -34,7 +34,7 @@ if ARGV.size < 2 then
 	exit
 end
 
-ref = Array.new(100){["A", "C", "G", "T"].sample}.join
+ref = Array.new(10){["A", "C", "G", "T"].sample}.join
 
 File.open(ARGV[0], "w") do |f|
 	f.puts ">testref"

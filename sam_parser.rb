@@ -98,14 +98,14 @@ if ARGV.size < 2
 end
 params = ARGV.getopts("k:")
 kmer_size = params.find{|k, v| k == "k"}[1].to_i
-kmer_size = 3 if kmer_size == 0
+kmer_size = 2 if kmer_size == 0
 
 
 print "read reference file : #{ARGV[1]}\n"
 
 ref_raw = Bio::FlatFile.open(Bio::FastaFormat, ARGV[1])
 samfile = File.open(ARGV[0], "r")
-kmer_mtx = Array.new(5 ** kmer_size).map{Array.new(5 ** kmer_size, 0)}
+kmer_mtx = Array.new(5 ** (2 * kmer_size)).map{Array.new(5 ** 2, 0)}
 
 ref = REF.new(ref_raw)
 print "finish reading reference file\n"
@@ -131,8 +131,7 @@ samfile.each do |line|
 		puts
 		break
 	end
-	
-	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i - 1]
+	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i]
 	unless ref_subseq
 		p ref_entireseq 
 		puts
@@ -141,11 +140,11 @@ samfile.each do |line|
 
 	query_subseq = String.new
 	if cigar.cigarOp[0].type == "S" then
-		query_subseq = sam.seq[cigar.cigarOp[0].length, sam.seq.length - 1]
+		query_subseq = sam.seq[cigar.cigarOp[0].length, sam.seq.length]
 	else
-		query_subseq = sam.seq[0, sam.seq.length - 1]
+		query_subseq = sam.seq[0, sam.seq.length]
 	end
-#	print "query_subseq : #{query_subseq}\nref_subseq   : #{ref_subseq}\n"
+	print "ref_subseq     : \"#{ref_subseq}\"\nquery_subseq   : \"#{query_subseq}\"\n"
 	ref_aligned = String.new
 	query_aligned = String.new
 	i = 0
@@ -153,13 +152,13 @@ samfile.each do |line|
 		cutlen = cigar.cigarOp[i].length
 		case cigar.cigarOp[i].type
 			when "M" then
-				ref_aligned << ref_subseq.slice!(0..cutlen - 1)
+				ref_aligned   << ref_subseq.slice!(0..cutlen - 1)
 				query_aligned << query_subseq.slice!(0..cutlen - 1)
 			when "I" then 
-				ref_aligned << "*" * cutlen
+				ref_aligned   << "*" * cutlen
 				query_aligned << query_subseq.slice!(0..cutlen - 1)
 			when "D" then
-				ref_aligned << ref_subseq.slice!(0..cutlen - 1)
+				ref_aligned   << ref_subseq.slice!(0..cutlen - 1)
 				query_aligned << "*" * cutlen
 			when "S" then
 
@@ -168,21 +167,38 @@ samfile.each do |line|
 		end
 		i = i + 1
 	end
-#	print "#{sam.qname}, #{sam.rname}\n#{ref_aligned[0, 100]}\n#{query_aligned[0, 100]}\n\n"	
+	print "ref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n\n"	
 	i = 0
 	while ref_aligned[i + kmer_size] != nil do
-		ref_idx = bases2coordinate(ref_aligned[i, kmer_size])
-		query_idx = bases2coordinate(query_aligned[i, kmer_size])
-		kmer_mtx[ref_idx][query_idx] = kmer_mtx[ref_idx][query_idx] + 1
+		ref_previous   = ref_aligned[i, kmer_size]
+		query_previous = query_aligned[i, kmer_size]
+		previous_str   = ref_previous + query_previous
+		print ">ref_previous   : #{ref_previous}\n query_previous : #{query_previous}\n previous_str   : #{previous_str}\n"
+		
+		ref_nxt   = ref_aligned[i + kmer_size]
+		query_nxt = query_aligned[i + kmer_size]
+		nxt_str   = ref_nxt + query_nxt
+		print " ref_nxt        : #{ref_nxt}     \n query_nxt      : #{query_nxt}     \n nxt_str        : #{nxt_str}\n" 
+
+		previous_idx = bases2coordinate(previous_str)		
+		nxt_idx      = bases2coordinate(nxt_str)
+		print " previous_idx   : #{previous_idx}\n nxt_idx        : #{nxt_idx}\n"  
+		kmer_mtx[previous_idx][nxt_idx] = kmer_mtx[previous_idx][nxt_idx] + 1
 		i = i + 1
 	end
 end
-
-
+=begin
+for i in 0..24 do
+	for j in 0..(5 ** (2 * kmer_size) - 1) do
+		printf("%5d", kmer_mtx[i.to_i][j.to_i].to_i)
+	end
+	puts
+	
+end
 kmer_mtx.each do |f|
 	f.each do |g|
-		printf("%4d, ", g)
+		printf("%5d, ", g)
 	end
 	puts
 end
-
+=end
