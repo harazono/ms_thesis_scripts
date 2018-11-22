@@ -34,7 +34,7 @@ if ARGV.size < 2 then
 	exit
 end
 
-ref = Array.new(10){["A", "C", "G", "T"].sample}.join
+ref = Array.new(12){["A", "C", "G", "T"].sample}.join
 
 File.open(ARGV[0], "w") do |f|
 	f.puts ">testref"
