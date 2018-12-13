@@ -4,7 +4,7 @@ require 'optparse'
 
 class SAM
 	attr_accessor :qname, :flag, :rname, :pos, :mapq, :cigar, :rnext, :pnext, :tlen, :seq, :qual
-	
+
 	def initialize(line)
 		parse(line)
 	end
@@ -19,13 +19,13 @@ class CIGAR #CIGARをパーズする。
 	class Op #CIGARの要素。M/X/I/Dの情報と長さを保持
 		attr_accessor :type, :length
 	end
-	
+
 	attr_accessor :cigarOp
-	
+
 	def initialize(cigar)
 		parse(cigar)
 	end
-	
+
 	def parse(cigar) #CIGAR文字列を順番に読み込んで、OPの配列を作る
 		@cigarOp = Array.new
 		tmpstring = String.new
@@ -49,11 +49,11 @@ end
 class REF
 
 	attr_accessor :refseq
-	
+
 	def initialize(ref_raw)
 		parse(ref_raw)
 	end
-	
+
 	def parse(ref_raw)
 		@refseq = Hash.new
 		ref_raw.each do |f|
@@ -118,13 +118,22 @@ STDERR.print "finish reading reference file\n"
 STDERR.print "reference chromosome are\n==========\n"
 
 ref.refseq.each do |k, v|
-	print "\"#{k}\"\n"
+	STDERR.print "\"#{k}\"\n"
 end
 STDERR.print "==========\n"
 
 ###
 # kmer_counter design
 # count up and fill k-mer * k-mer table.
+#
+#                <---reference k-mer--->
+#       |
+#       |
+#       |
+#  query k-mer
+#       |
+#       |
+#       |
 #
 # ex) 2-mer
 # kmer_mtx[i][j]
@@ -134,7 +143,7 @@ STDERR.print "==========\n"
 #      0 1 2 ... i ...
 #      A A A A A C C C C C G G G G G T T T T T * * * * *
 #      A C G T * A C G T * A C G T * A C G T * A C G T *
-# 0 AA 
+# 0 AA
 # 1 AC
 # 2 AG
 # . AT
@@ -162,8 +171,8 @@ samfile.each do |line|
 	sam = SAM.new(line)
 	next if sam.rname == "*"
 	next if sam.seq   == "*"
-	cigar = CIGAR.new(sam.cigar)
-	ref_subseq = String.new
+	cigar         = CIGAR.new(sam.cigar)
+	ref_subseq    = String.new
 	ref_entireseq = String.new
 	ref_entireseq = ref.refseq[sam.rname]
 	unless ref_entireseq
@@ -171,9 +180,11 @@ samfile.each do |line|
 		puts
 		exit
 	end
-	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i]
+	tail_length = 0
+	tail_length = cigar.cigarOp[-1].length if cigar.cigarOp[-1].type == "H"
+	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i + tail_length]
 	unless ref_subseq
-		STDERR.p ref_entireseq 
+		STDERR.p ref_entireseq
 		STDERR.puts
 		break
 	end
@@ -194,7 +205,7 @@ samfile.each do |line|
 			when "M" then
 				ref_aligned   << ref_subseq.slice!(0..cutlen - 1)
 				query_aligned << query_subseq.slice!(0..cutlen - 1)
-			when "I" then 
+			when "I" then
 				ref_aligned   << "*" * cutlen
 				query_aligned << query_subseq.slice!(0..cutlen - 1)
 			when "D" then
@@ -202,6 +213,8 @@ samfile.each do |line|
 				query_aligned << "*" * cutlen
 			when "S" then
 
+			when "H"
+				break
 			else
 				break
 		end
@@ -220,27 +233,36 @@ samfile.each do |line|
 		nxt_str   = ref_nxt + query_nxt
 =end
 		ref_kmer_str   = ref_aligned[i, kmer_size]
-		query_kmer_str = query_aligned[i, kmer_size] 
+		query_kmer_str = query_aligned[i, kmer_size]
 
 		ref_idx        = bases2coordinate(ref_kmer_str)
 		query_idx      = bases2coordinate(query_kmer_str)
 
 		kmer_mtx[ref_idx][query_idx] = kmer_mtx[ref_idx][query_idx] + 1
+#		print "cigar          : \"#{sam.cigar}\"\nref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n" if ref_aligned[i] == "*" && query_aligned[i] == "*"
 =begin
 		STDERR.print ">ref_previous   : #{ref_previous}\n query_previous : #{query_previous}\n previous_str   : #{previous_str}\n"
 		STDERR.print " ref_nxt        : #{ref_nxt}     \n query_nxt      : #{query_nxt}     \n nxt_str        : #{nxt_str}\n"
-		STDERR.print " previous_idx   : #{previous_idx}\n nxt_idx        : #{nxt_idx}\n"  
-=end	
+		STDERR.print " previous_idx   : #{previous_idx}\n nxt_idx        : #{nxt_idx}\n"
+=end
 		i = i + 1
 	end
 end
 
-p kmer_mtx
 
+for i in 0..(5 ** kmer_size)-1 do
+	for j in 0..(5 ** kmer_size)-1 do
+		printf("%7d", kmer_mtx[j][i])
+		printf(", ") if j != (5 ** kmer_size)-1
+	end
+	print "\n"
+end
+=begin
 kmer_mtx.each do |f|
+
 	f.each do |g|
 		printf("%5d, ", g)
 	end
 	puts
 end
-
+=end
