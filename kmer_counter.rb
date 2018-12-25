@@ -65,7 +65,7 @@ end
 
 
 def base2num(base)
-	case base 
+	case base
 		when "A", "a" then
 			return 0
 		when "C", "c" then
@@ -74,7 +74,7 @@ def base2num(base)
 			return 2
 		when "T", "t" then
 			return 3
-		when "*" then
+		when "-" then
 			return 4
 		else
 			return -1
@@ -92,7 +92,7 @@ def bases2coordinate(bases)
 end
 
 def usage
-	STDERR.print "kmer_counter.rb -k <kmer_size> <mapped.sam> <reference.fa> \n"
+	#STDERR.print "kmer_counter.rb -k <kmer_size> <mapped.sam> <reference.fa> \n"
 end
 
 
@@ -107,20 +107,20 @@ kmer_size = params.find{|k, v| k == "k"}[1].to_i
 kmer_size = 2 if kmer_size == 0
 
 
-STDERR.print "read reference file : #{ARGV[1]}\n"
+#STDERR.print "read reference file : #{ARGV[1]}\n"
 
 ref_raw = Bio::FlatFile.open(Bio::FastaFormat, ARGV[1])
 samfile = File.open(ARGV[0], "r")
 kmer_mtx = Array.new(5 ** (kmer_size)).map{Array.new(5 ** (kmer_size), 0)}
 
 ref = REF.new(ref_raw)
-STDERR.print "finish reading reference file\n"
-STDERR.print "reference chromosome are\n==========\n"
+#STDERR.print "finish reading reference file\n"
+#STDERR.print "reference chromosome are\n==========\n"
 
 ref.refseq.each do |k, v|
-	STDERR.print "\"#{k}\"\n"
+#	STDERR.print "\"#{k}\"\n"
 end
-STDERR.print "==========\n"
+#STDERR.print "==========\n"
 
 ###
 # kmer_counter design
@@ -180,11 +180,40 @@ samfile.each do |line|
 		puts
 		exit
 	end
-	tail_length = 0
-	tail_length = cigar.cigarOp[-1].length if cigar.cigarOp[-1].type == "H"
-	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i + tail_length]
+#	tail_length = 0
+#	tail_length = cigar.cigarOp[-1].length if cigar.cigarOp[-1].type == "H"
+#	ref_subseq = ref_entireseq[sam.pos.to_i - 1, sam.seq.to_s.length.to_i + tail_length]
+  c_sum = 0
+  m_sum = 0
+  i_sum = 0
+  d_sum = 0
+  s_sum = 0
+  h_sum = 0
+	i = 0
+	while cigar.cigarOp[i] != nil do
+		cutlen = cigar.cigarOp[i].length
+    c_sum = c_sum + cutlen
+		case cigar.cigarOp[i].type
+			when "M" then
+        m_sum = m_sum + cutlen
+			when "I" then
+        i_sum = i_sum + cutlen
+			when "D" then
+        d_sum = d_sum + cutlen
+			when "S" then
+        s_sum = s_sum + cutlen
+      when "H" then
+        h_sum = h_sum + cutlen
+			else
+				break
+		end
+		i = i + 1
+	end
+#  STDERR.print "(c, m, i, d, s, h) = (#{c_sum}, #{m_sum}, #{i_sum}, #{d_sum}, #{s_sum}, #{h_sum})\n"
+
+  ref_subseq = ref_entireseq[sam.pos.to_i - 1,sam.pos.to_i + c_sum]
 	unless ref_subseq
-		STDERR.p ref_entireseq
+		STDERR.puts ref_entireseq
 		STDERR.puts
 		break
 	end
@@ -195,8 +224,8 @@ samfile.each do |line|
 	else
 		query_subseq = sam.seq[0, sam.seq.length]
 	end
-	STDERR.print "ref_subseq     : \"#{ref_subseq}\"\nquery_subseq   : \"#{query_subseq}\"\n"
-	ref_aligned = String.new
+#	STDERR.print "ref_subseq     : \"#{ref_subseq}\"\nquery_subseq   : \"#{query_subseq}\"\n"
+	ref_aligned   = String.new
 	query_aligned = String.new
 	i = 0
 	while cigar.cigarOp[i] != nil do
@@ -206,13 +235,13 @@ samfile.each do |line|
 				ref_aligned   << ref_subseq.slice!(0..cutlen - 1)
 				query_aligned << query_subseq.slice!(0..cutlen - 1)
 			when "I" then
-				ref_aligned   << "*" * cutlen
+				ref_aligned   << "-" * cutlen
 				query_aligned << query_subseq.slice!(0..cutlen - 1)
 			when "D" then
 				ref_aligned   << ref_subseq.slice!(0..cutlen - 1)
-				query_aligned << "*" * cutlen
+				query_aligned << "-" * cutlen
 			when "S" then
-
+        #STDERR.print "ref_aligned.length = #{ref_aligned.length} query_aligned.length = #{query_aligned.length}\n" if i != 0
 			when "H"
 				break
 			else
@@ -220,14 +249,18 @@ samfile.each do |line|
 		end
 		i = i + 1
 	end
-	STDERR.print "ref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n\n"	
+  if ref_aligned.length != query_aligned.length then
+    STDERR.print "ref_aligned.length = #{ref_aligned.length} query_aligned.length = #{query_aligned.length}\n"
+    exit
+  end
+#	STDERR.print "ref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n\n"
 	i = 0
-	while ref_aligned[i + kmer_size] != nil do
+	while ref_aligned[i + kmer_size] != nil  && query_aligned[i + kmer_size] != nil do
 =begin
 		ref_previous   = ref_aligned[i, kmer_size]
 		query_previous = query_aligned[i, kmer_size]
 		previous_str   = ref_previous + query_previous
-		
+
 		ref_nxt   = ref_aligned[i + kmer_size]
 		query_nxt = query_aligned[i + kmer_size]
 		nxt_str   = ref_nxt + query_nxt
@@ -239,17 +272,30 @@ samfile.each do |line|
 		query_idx      = bases2coordinate(query_kmer_str)
 
 		kmer_mtx[ref_idx][query_idx] = kmer_mtx[ref_idx][query_idx] + 1
-#		print "cigar          : \"#{sam.cigar}\"\nref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n" if ref_aligned[i] == "*" && query_aligned[i] == "*"
-=begin
-		STDERR.print ">ref_previous   : #{ref_previous}\n query_previous : #{query_previous}\n previous_str   : #{previous_str}\n"
-		STDERR.print " ref_nxt        : #{ref_nxt}     \n query_nxt      : #{query_nxt}     \n nxt_str        : #{nxt_str}\n"
-		STDERR.print " previous_idx   : #{previous_idx}\n nxt_idx        : #{nxt_idx}\n"
-=end
+    if ref_aligned[i] == "-" && query_aligned[i] == "-" then
+      STDERR.print "cigar          : \"#{sam.cigar}\"\nref_aligned    : ...\"#{ref_aligned[i-1..-1]}\"\nquery_aligned  : ...\"#{query_aligned[i-1..-1]}\"\n"
+      exit
+    end
 		i = i + 1
 	end
+  STDERR.print "finish proccesing #{sam.qname}\n"
 end
 
 
+# print at here
+#ref_subseq     : "CGACTATTCC"
+#query_subseq   : "CGTCTATTCC"
+#ref_aligned    : "CGACTATTCC"
+#query_aligned  : "CGTCTATTCC"
+#
+#              reference kmer
+#              1,       0,       0,       0,       0
+# qry kmer     0,       3,       0,       0,       0
+#              0,       0,       1,       0,       0
+#              1,       0,       0,       3,       0
+#              0,       0,       0,       0,       0
+#
+#
 for i in 0..(5 ** kmer_size)-1 do
 	for j in 0..(5 ** kmer_size)-1 do
 		printf("%7d", kmer_mtx[j][i])
