@@ -32,7 +32,7 @@ def bases2coordinate(bases)
 end
 
 def usage
-	STDERR.print "kmer_counter.rb -k <kmer_size> <mapped.sam> <reference.fa> \n"
+	STDERR.print "kmer_counter_mod.rb -k <kmer_size> <mapped.sam> <reference.fa> \n"
 end
 
 
@@ -52,7 +52,7 @@ kmer_size = 2 if kmer_size == 0
 ref_raw = Bio::FlatFile.open(Bio::FastaFormat, ARGV[1])
 samfile = File.open(ARGV[0], "r")
 kmer_mtx = Array.new(5 ** (kmer_size)).map{Array.new(5 ** (kmer_size), 0)}
-
+ref_kmer_mtx = Array.new(5 ** (kmer_size), 0)
 ref = REF.new(ref_raw)
 #STDERR.print "finish reading reference file\n"
 #STDERR.print "reference chromosome are\n==========\n"
@@ -104,8 +104,13 @@ end
 #   TT
 #   T*
 #
+#
+#
+#
+#
 ###
 
+line_counter = 1# used for only printing progress
 samfile.each do |line|
 	next if line[/^@/]
 	sam = SAM.new(line)
@@ -196,15 +201,6 @@ samfile.each do |line|
 #	STDERR.print "ref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n\n"
 	i = 0
 	while ref_aligned[i + kmer_size] != nil  && query_aligned[i + kmer_size] != nil do
-=begin
-		ref_previous   = ref_aligned[i, kmer_size]
-		query_previous = query_aligned[i, kmer_size]
-		previous_str   = ref_previous + query_previous
-
-		ref_nxt   = ref_aligned[i + kmer_size]
-		query_nxt = query_aligned[i + kmer_size]
-		nxt_str   = ref_nxt + query_nxt
-=end
 		ref_kmer_str   = ref_aligned[i, kmer_size]
 		query_kmer_str = query_aligned[i, kmer_size]
 
@@ -212,15 +208,18 @@ samfile.each do |line|
 		query_idx      = bases2coordinate(query_kmer_str)
 
 		kmer_mtx[ref_idx][query_idx] = kmer_mtx[ref_idx][query_idx] + 1
+    ref_kmer_mtx[ref_idx] = ref_kmer_mtx[ref_idx] + 1
     if ref_aligned[i] == "-" && query_aligned[i] == "-" then
       STDERR.print "cigar          : \"#{sam.cigar}\"\nref_aligned    : ...\"#{ref_aligned[i-1..-1]}\"\nquery_aligned  : ...\"#{query_aligned[i-1..-1]}\"\n"
       exit
     end
-		i = i + 1
-	end
-  STDERR.print "finish proccesing #{sam.qname}\n"
-end
 
+		i = i + 1
+  end
+  STDERR.print "\rproceed #{line_counter} read"
+  line_counter = line_counter + 1
+end
+STDERR.puts
 
 # print at here
 #ref_subseq     : "CGACTATTCC"
@@ -238,17 +237,8 @@ end
 #
 for i in 0..(5 ** kmer_size)-1 do
 	for j in 0..(5 ** kmer_size)-1 do
-		printf("%7d", kmer_mtx[j][i])
+    printf("%f", (kmer_mtx[j][i] / ref_kmer_mtx[j].to_f / kmer_size.to_f))
 		printf(", ") if j != (5 ** kmer_size)-1
 	end
 	print "\n"
 end
-=begin
-kmer_mtx.each do |f|
-
-	f.each do |g|
-		printf("%5d, ", g)
-	end
-	puts
-end
-=end
