@@ -237,7 +237,7 @@ STDERR.puts
 #
 for i in 0..(5 ** kmer_size)-1 do
 	for j in 0..(5 ** kmer_size)-1 do
-    printf("%f", (kmer_mtx[j][i] / ref_kmer_mtx[j].to_f / kmer_size.to_f))
+    printf("%8f", (kmer_mtx[j][i] / ref_kmer_mtx[j].to_f / (5 ** kmer_size).to_f))
 		printf(", ") if j != (5 ** kmer_size)-1
 	end
 	print "\n"
