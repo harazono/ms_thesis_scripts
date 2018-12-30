@@ -12,7 +12,7 @@ if ARGV.size < 1
 end
 
 table = CSV.table(ARGV[0], headers:false)
-alt = table.map{ |row| row.map{|col| log10(col)} }
+alt = table.map{ |row| row.map{|col| (log10(col) + 1.5) * 100} }
 =begin
 puts <<"EOS"
 #ifndef _SCORE_2MER_MOD_3DIG
@@ -23,10 +23,11 @@ EOS
 for i in 0..alt.size-1
   for j in 0..alt.size-1
     if alt[j][i].finite? then
-      printf("%8f", alt[j][i])
+      printf("%4d", alt[j][i].round)
     else
-      printf("     -inf")
+#      printf("%d", -1 * (2 ** 30))
 #      printf("%11d", -1 * (2 ** 30))
+       printf("-inf")
     end
     printf(", ") if j != alt.size-1
   end

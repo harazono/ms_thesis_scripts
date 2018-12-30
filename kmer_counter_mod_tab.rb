@@ -242,11 +242,11 @@ STDERR.puts
 #ref_subseq			: "CGACTATTCC"
 #query_subseq		: "CGTCTATTCC"
 #ref_aligned		: "CGACTATTCC"
-#query_aligned	: "CGTCTATTCC"
+#query_aligned	    : "CGTCTATTCC"
 #
 #							 reference kmer
 #							 1,				0,			 0,				0,			 0
-# qry kmer		 0,				3,			 0,				0,			 0
+# qry kmer		             0,				3,			 0,				0,			 0
 #							 0,				0,			 1,				0,			 0
 #							 1,				0,			 0,				3,			 0
 #							 0,				0,			 0,				0,			 0

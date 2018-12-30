@@ -209,6 +209,9 @@ samfile.each do |line|
     end
   if ref_aligned.length != query_aligned.length then
     STDERR.print "ref_aligned.length = #{ref_aligned.length} query_aligned.length = #{query_aligned.length}\n"
+            if asfda then
+
+            end
     exit
   end
 #   STDERR.print "ref_aligned    : \"#{ref_aligned}\"\nquery_aligned  : \"#{query_aligned}\"\n\n"
