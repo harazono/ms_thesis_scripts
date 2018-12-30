@@ -117,6 +117,12 @@ samfile.each do |line|
 	next if sam.rname == "*"
 	next if sam.seq   == "*"
 	cigar         = CIGAR.new(sam.cigar)
+  sam_flag      = sam.flag.to_i
+  
+  #use only primary alignment and supplementary alignment and reverse compliment of them.
+  #sample has many supplimentary alignment.
+  next if sam_flag != 0 && sam_flag != 16 && sam_flag != 2048 && sam_flag != 2064
+  
 	ref_subseq    = String.new
 	ref_entireseq = String.new
 	ref_entireseq = ref.refseq[sam.rname]
