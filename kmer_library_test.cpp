@@ -38,3 +38,14 @@ TEST_F(MyLibraryTest, KInt_Simple2_Test) {
   KInt<2> k6("--");
   EXPECT_EQ(k6, 24);
 }
+
+TEST_F(MyLibraryTest, KInt_Simple3_Test) {
+  KInt<3> k1;
+  EXPECT_EQ(k1, 0);
+  KInt<3> k4("GGC");
+  EXPECT_EQ(k4, 61);
+  KInt<3> k5("G-G");
+  EXPECT_EQ(k5, 72);
+  KInt<3> k6("-AG");
+  EXPECT_EQ(k6, 102);
+}
