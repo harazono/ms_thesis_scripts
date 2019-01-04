@@ -122,15 +122,13 @@ samfile.each do |line|
 	next if line[/^@/]
 	sam = SAM.new(line)
 	next if sam.rname == "*"
-	next if sam.seq		== "*"
-	cigar					= CIGAR.new(sam.cigar)
-	sam_flag			= sam.flag.to_i
-	
+	next if sam.seq	  == "*"
+	cigar    = CIGAR.new(sam.cigar)
+	sam_flag = sam.flag.to_i
 	#use only primary alignment and supplementary alignment and reverse compliment of them.
 	#sample has many supplimentary alignment.
 	next if sam_flag != 0 && sam_flag != 16 && sam_flag != 2048 && sam_flag != 2064
-	
-	ref_subseq		= String.new
+	ref_subseq    = String.new
 	ref_entireseq = String.new
 	ref_entireseq = ref.refseq[sam.rname]
 	unless ref_entireseq
@@ -183,25 +181,32 @@ samfile.each do |line|
 		query_subseq = sam.seq[0, sam.seq.length]
 	end
 # STDERR.print "ref_subseq		 : \"#{ref_subseq}\"\nquery_subseq	 : \"#{query_subseq}\"\n"
-	ref_aligned		= String.new
+	ref_aligned	  = String.new
 	query_aligned = String.new
 	i = 0
+    ref_cutpos   = 0
+    query_cutpos = 0
+    cutlen = 0
 	while cigar.cigarOp[i] != nil do
 		cutlen = cigar.cigarOp[i].length
+        #print "cutlen : #{cutlen}\n"
 		case cigar.cigarOp[i].type
 			when "M" then
-				ref_aligned		<< ref_subseq.slice!(0..cutlen - 1)
-				query_aligned << query_subseq.slice!(0..cutlen - 1)
+				ref_aligned	  <<   ref_subseq[ref_cutpos,   cutlen]
+				query_aligned << query_subseq[query_cutpos, cutlen]
+                ref_cutpos   = ref_cutpos   + cutlen
+                query_cutpos = query_cutpos + cutlen
 			when "I" then
-				ref_aligned		<< "-" * cutlen
-				query_aligned << query_subseq.slice!(0..cutlen - 1)
+				ref_aligned	  << "-" * cutlen
+				query_aligned << query_subseq[query_cutpos, cutlen]
+                query_cutpos = query_cutpos + cutlen
 			when "D" then
-				ref_aligned		<< ref_subseq.slice!(0..cutlen - 1)
+				ref_aligned	  <<   ref_subseq[ref_cutpos,   cutlen]
 				query_aligned << "-" * cutlen
+                ref_cutpos   = ref_cutpos   + cutlen
 			when "S" then
 				#STDERR.print "ref_aligned.length = #{ref_aligned.length} query_aligned.length = #{query_aligned.length}\n" if i != 0
-			when "H"
-				break
+			when "H" then
 			else
 				break
 		end
@@ -211,8 +216,8 @@ samfile.each do |line|
 		STDERR.print "ref_aligned.length = #{ref_aligned.length} query_aligned.length = #{query_aligned.length}\n"
 		exit
 	end
-# STDERR.print "ref_aligned		 : \"#{ref_aligned}\"\nquery_aligned	: \"#{query_aligned}\"\n\n"
-	i = 0
+    #print "ref_aligned   : \"#{ref_aligned}\"\nquery_aligned : \"#{query_aligned}\"\n\n"
+    i = 0
 	if sam_flag & 16 == 16 then
        ref_aligned   = revcomp(ref_aligned)
        query_aligned = revcomp(query_aligned)
@@ -233,7 +238,7 @@ samfile.each do |line|
 
 		i = i + 1
 	end
-	STDERR.print "\rproceed #{line_counter} read"
+	STDERR.print "\rproceed #{line_counter} reads"
 	line_counter = line_counter + 1
 end
 STDERR.puts
@@ -252,6 +257,7 @@ STDERR.puts
 #							 0,				0,			 0,				0,			 0
 #
 #
+
 for i in 0..(5 ** kmer_size)-1 do
 	for j in 0..(5 ** kmer_size)-1 do
 		printf("%8f", (kmer_mtx[j][i] / ref_kmer_mtx[j].to_f / (5 ** kmer_size).to_f))
@@ -259,3 +265,4 @@ for i in 0..(5 ** kmer_size)-1 do
 	end
 	print "\n"
 end
+

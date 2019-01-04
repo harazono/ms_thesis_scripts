@@ -17,6 +17,7 @@ for i in 1..6 do
     k = i
   end
 end
+diff = 0
 diff = -30 + 174 - 30 if k == 1
 diff = 200 + 34  - 10 if k == 2
 diff = 250 + 133 - 30 if k == 3
