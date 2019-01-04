@@ -17,9 +17,9 @@ for i in 1..6 do
     k = i
   end
 end
-diff = -30 if k == 1
-diff = 200 if k == 2
-diff = 250 if k == 3
+diff = -30 + 174 - 30 if k == 1
+diff = 200 + 34  - 10 if k == 2
+diff = 250 + 133 - 30 if k == 3
 
 alt = table.map{ |row| row.map{|col| log10(col) * 100} }
 head_string = "#ifndef _SCORE_#{k}MER_MOD_3DIG\n#define _SCORE_#{k}MER_MOD_3DIG\nint score_#{k}mer_mod_3digit[] = {\n"
