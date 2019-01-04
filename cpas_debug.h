@@ -38,9 +38,9 @@ template<class T> inline void DebugOutputVariableDumpHelper2(const T& arg){DEBUG
 #define DUMP_9(arg, ...) (DebugOutputVariableDumpHelper1(#arg),DebugOutputVariableDumpHelper2(arg))
 
 #if defined(NDEBUG)
-#define ASSERT_WMD(message, condition, dumpmethod) ;
+#define MYASSERT_WMD(message, condition, dumpmethod) ;
 #else
-#define ASSERT_WMD(message, condition, dumpmethod) if(condition) ; else {\
+#define MYASSERT_WMD(message, condition, dumpmethod) if(condition) ; else {\
   DEBUGMACRO_ERRORSTREAM << "ASSERTION FAILED!\n" \
   "  File      : " << __FILE__ << "\n" \
   "  Line      : " << __LINE__ << "\n" \
@@ -52,34 +52,34 @@ template<class T> inline void DebugOutputVariableDumpHelper2(const T& arg){DEBUG
   }
 #endif
 
-#define ASSERT_WM(message, condition)                    ASSERT_WMD(message, condition, DEBUGMACRO_ERRORSTREAM << std::flush)
-#define ASSERT(condition)                        ASSERT_WM("N/A", condition)
+#define MYASSERT_WM(message, condition)                    MYASSERT_WMD(message, condition, DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT(condition)                        MYASSERT_WM("N/A", condition)
 
-#define ASSERT_EQUALS_WMD(message, arg1, arg2, dumpmethod) ASSERT_WMD(message, (arg1) == (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
-#define ASSERT_EQUALS_WM(message, arg1, arg2)              ASSERT_EQUALS_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
-#define ASSERT_EQUALS(arg1, arg2)                          ASSERT_EQUALS_WM("N/A", arg1, arg2)
+#define MYASSERT_EQUALS_WMD(message, arg1, arg2, dumpmethod) MYASSERT_WMD(message, (arg1) == (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
+#define MYASSERT_EQUALS_WM(message, arg1, arg2)              MYASSERT_EQUALS_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_EQUALS(arg1, arg2)                          MYASSERT_EQUALS_WM("N/A", arg1, arg2)
 
-#define ASSERT_LT_WMD(message, arg1, arg2, dumpmethod)     ASSERT_WMD(message, (arg1) < (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
-#define ASSERT_LT_WM(message, arg1, arg2)                  ASSERT_LT_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
-#define ASSERT_LT(arg1, arg2)                              ASSERT_LT_WM("N/A", arg1, arg2)
+#define MYASSERT_LT_WMD(message, arg1, arg2, dumpmethod)     MYASSERT_WMD(message, (arg1) < (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
+#define MYASSERT_LT_WM(message, arg1, arg2)                  MYASSERT_LT_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_LT(arg1, arg2)                              MYASSERT_LT_WM("N/A", arg1, arg2)
 
-#define ASSERT_LTE_WMD(message, arg1, arg2, dumpmethod)    ASSERT_WMD(message, (arg1) <= (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
-#define ASSERT_LTE_WM(message, arg1, arg2)                 ASSERT_LTE_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
-#define ASSERT_LTE(arg1, arg2)                             ASSERT_LTE_WM("N/A", arg1, arg2)
+#define MYASSERT_LTE_WMD(message, arg1, arg2, dumpmethod)    MYASSERT_WMD(message, (arg1) <= (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
+#define MYASSERT_LTE_WM(message, arg1, arg2)                 MYASSERT_LTE_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_LTE(arg1, arg2)                             MYASSERT_LTE_WM("N/A", arg1, arg2)
 
-#define ASSERT_GT_WMD(message, arg1, arg2, dumpmethod)     ASSERT_WMD(message, (arg1) > (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
-#define ASSERT_GT_WM(message, arg1, arg2)                  ASSERT_GT_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
-#define ASSERT_GT(arg1, arg2)                              ASSERT_GT_WM("N/A", arg1, arg2)
+#define MYASSERT_GT_WMD(message, arg1, arg2, dumpmethod)     MYASSERT_WMD(message, (arg1) > (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
+#define MYASSERT_GT_WM(message, arg1, arg2)                  MYASSERT_GT_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_GT(arg1, arg2)                              MYASSERT_GT_WM("N/A", arg1, arg2)
 
-#define ASSERT_GTE_WMD(message, arg1, arg2, dumpmethod)    ASSERT_WMD(message, (arg1) >= (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
-#define ASSERT_GTE_WM(message, arg1, arg2)                 ASSERT_GTE_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
-#define ASSERT_GTE(arg1, arg2)                             ASSERT_GTE_WM("N/A", arg1, arg2)
+#define MYASSERT_GTE_WMD(message, arg1, arg2, dumpmethod)    MYASSERT_WMD(message, (arg1) >= (arg2), (VARDUMP(arg1, arg2), (dumpmethod)))
+#define MYASSERT_GTE_WM(message, arg1, arg2)                 MYASSERT_GTE_WMD(message, arg1, arg2, DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_GTE(arg1, arg2)                             MYASSERT_GTE_WM("N/A", arg1, arg2)
 
-#define ASSERT_NEVERREACH_WD(dumpmethod)        ASSERT_WMD("Logic error", false, dumpmethod)
-#define ASSERT_NEVERREACH( )            ASSERT_NEVERREACH_WD(DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_NEVERREACH_WD(dumpmethod)        MYASSERT_WMD("Logic error", false, dumpmethod)
+#define MYASSERT_NEVERREACH( )            MYASSERT_NEVERREACH_WD(DEBUGMACRO_ERRORSTREAM << std::flush)
 
-#define ASSERT_NOTIMPLEMENTED_WD(dumpmethod)    ASSERT_WMD("Not implemented", false, dumpmethod)
-#define ASSERT_NOTIMPLEMENTED( ) ASSERT_NEVERREACH_WD(DEBUGMACRO_ERRORSTREAM << std::flush)
+#define MYASSERT_NOTIMPLEMENTED_WD(dumpmethod)    MYASSERT_WMD("Not implemented", false, dumpmethod)
+#define MYASSERT_NOTIMPLEMENTED( ) MYASSERT_NEVERREACH_WD(DEBUGMACRO_ERRORSTREAM << std::flush)
 
 #endif // #ifndef _DEBUG_HEADER
 
