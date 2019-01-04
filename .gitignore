@@ -6,3 +6,4 @@
 kenpin*.h
 *.o
 count_kmer
+kmer_library_test

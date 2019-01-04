@@ -9,7 +9,7 @@ class MyLibraryTest : public ::testing::Test {
 };
 
 
-TEST_F(MyLibraryTest, KInt_Simple_Test) {
+TEST_F(MyLibraryTest, KInt_Simple1_Test) {
   KInt<1> k1;
   EXPECT_EQ(k1, 0);
   KInt<1> k2("A");
@@ -22,4 +22,19 @@ TEST_F(MyLibraryTest, KInt_Simple_Test) {
   EXPECT_EQ(k5, 3);
   KInt<1> k6("-");
   EXPECT_EQ(k6, 4);
+}
+
+TEST_F(MyLibraryTest, KInt_Simple2_Test) {
+  KInt<2> k1;
+  EXPECT_EQ(k1, 0);
+  KInt<2> k2("AA");
+  EXPECT_EQ(k2, 0);
+  KInt<2> k3("AC");
+  EXPECT_EQ(k3, 1);
+  KInt<2> k4("CA");
+  EXPECT_EQ(k4, 5);
+  KInt<2> k5("CC");
+  EXPECT_EQ(k5, 6);
+  KInt<2> k6("--");
+  EXPECT_EQ(k6, 24);
 }
