@@ -23,6 +23,7 @@ constexpr ulong ipow(ulong i, uint N)
   return N <= 1 ? i : i * ipow(i, N - 1);
 }
 
+const Base GAP_BASE = 4;
 inline Base char2Base(char inch)
 {
   switch(inch) {
@@ -39,7 +40,7 @@ inline Base char2Base(char inch)
     case 't':
       return 3;
     case '-':
-      return 4;
+      return GAP_BASE;
     default:
       MYASSERT_NEVERREACH_WD(DUMP(int(inch)));
   }
@@ -57,6 +58,16 @@ inline std::string BString2String(const BString& b)
   retval.resize(b.size());
   for(uint i = 0; i < b.size(); i++) {
     retval[i] = base2Char(b[i]);
+  }
+  return retval;
+}
+
+inline BString String2BString(const std::string& s)
+{
+  BString retval;
+  retval.resize(s.size());
+  for(uint i = 0; i < s.size(); i++) {
+    retval[i] = char2Base(s[i]);
   }
   return retval;
 }
@@ -191,6 +202,74 @@ inline CIGAROPS parseCIGARString(const std::string& cigarString) {
     retval.push_back(CIGAROp(op, num));
   }
   return retval;
+}
+
+inline void generateAlignmentSequencesFromCIGARAndSeqs(
+  const BString& refbs,
+  const BString& querybs,
+  const CIGAROPS& ops,
+  int refStartPos,
+  int queryStartPos,
+  BString& ras,
+  BString& qas
+) {
+  size_t alignmentSize = 0;
+  for(auto& x: ops) {
+    switch(x.op) {
+    case 'M':
+    case 'I':
+    case 'D':
+    case 'X':
+    case '=':
+    case 'P':
+      alignmentSize += x.len;
+    }
+  }
+  ras.resize(alignmentSize);
+  qas.resize(alignmentSize);
+  size_t ai = 0;
+  size_t rp = refStartPos;
+  size_t qp = queryStartPos;
+  for(auto& x: ops) {
+    switch(x.op) {
+    case 'M':
+    case '=':
+    case 'X':
+      for(int i = 0; i < x.len; ++i) {
+        ras[ai] = refbs[rp++];
+        qas[ai] = querybs[qp++];
+        ai++;
+      }
+      break;
+    case 'I':
+      for(int i = 0; i < x.len; ++i) {
+        ras[ai] = GAP_BASE;
+        qas[ai] = querybs[qp++];
+        ai++;
+      }
+      break;
+    case 'D':
+      for(int i = 0; i < x.len; ++i) {
+        ras[ai] = refbs[rp++];
+        qas[ai] = GAP_BASE;
+        ai++;
+      }
+      break;
+    case 'S':
+      qp += x.len;
+      break;
+    case 'H':
+      break;
+    case 'P':
+    case 'N':
+      // not implemented
+      std::cout << "ERROR: P/N in CIGAR are not supported." << std::endl;
+      std::exit(2);
+    default:
+      std::cout << "ERROR: Logic error." << std::endl;
+      std::exit(2);
+    }
+  }
 }
 
 struct SAMRecord {

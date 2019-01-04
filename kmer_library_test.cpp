@@ -85,6 +85,16 @@ TEST_F(MyLibraryTest, ParseSAM_Test) {
   EXPECT_EQ(r.pos, 0);
 }
 
+TEST_F(MyLibraryTest, BString_Test) {
+  const string s = "ACCGGGTGGTC--G-";
+  const BString bs = String2BString(s);
+  const string rev_s = BString2String(bs);
+  EXPECT_STREQ(s.c_str(), rev_s.c_str());
+  EXPECT_EQ(bs[0], 0);
+  EXPECT_EQ(bs[1], 1);
+  EXPECT_EQ(bs.back(), 4);
+}
+
 TEST_F(MyLibraryTest, ParseCIGAR_Simple1_Test) {
   CIGAROPS ops = parseCIGARString("1M");
   ASSERT_EQ(ops.size(), 1);
@@ -101,6 +111,23 @@ TEST_F(MyLibraryTest, ParseCIGAR_Simple2_Test) {
   EXPECT_EQ(ops[1].len, 21);
   EXPECT_EQ(ops[2].op, 'D');
   EXPECT_EQ(ops[2].len, 412);
+}
+
+TEST_F(MyLibraryTest, GenerateAlignmentFromCIGAR_Test) {
+  const string refSeq     = "ACGTGCGT";
+  const string querySeq   = "CGGCAG";
+  const BString refBSeq   = String2BString(refSeq);
+  const BString queryBSeq = String2BString(querySeq);
+  // ACGTGC-GT
+  //  || || |
+  //  CG-GCAG
+  CIGAROPS ops = parseCIGARString("1H2M1D2M1I1M1H");
+  BString ras, qas;
+  generateAlignmentSequencesFromCIGARAndSeqs(refBSeq, queryBSeq, ops, 1, 0, ras, qas);
+  const string rass = BString2String(ras);
+  const string qass = BString2String(qas);
+  EXPECT_STREQ(rass.c_str(), "CGTGC-G");
+  EXPECT_STREQ(qass.c_str(), "CG-GCAG");
 }
 
 int main(int argc, char **argv) {
