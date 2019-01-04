@@ -111,7 +111,7 @@ public:
 			   fprintf(stderr, "Failed to expand the executable path '%s'\n", argv0);
 			   exit(1);
 		  }
-		  fprintf(stderr, "My executable path is %s\n", p);
+		  // fprintf(stderr, "My executable path is %s\n", p);
 		  sprintf(arg_buffer1, "%d", getpid());
 		  memset(&sa,     0, sizeof(sa));
 		  memset(&old_sa, 0, sizeof(old_sa));
