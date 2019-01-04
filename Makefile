@@ -1,5 +1,5 @@
 DEPENDS := .depend.mk
-CXXFLAGS := -g -Wall -O0
+CXXFLAGS := -g -Wall -O0 -std=c++11
 SOURCES := count_kmer.cpp
 CXX := $(HOME)/local/bin/g++
 
