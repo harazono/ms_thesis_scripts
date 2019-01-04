@@ -39,7 +39,7 @@ inline Base char2Base(char inch)
     case '-':
       return 4;
     default:
-      MYASSERT_NEVERREACH_WD(DUMP(inch));
+      MYASSERT_NEVERREACH_WD(DUMP(int(inch)));
   }
 }
 
@@ -80,7 +80,7 @@ public:
     std::string retval;
     uint64_t v = kint;
     for(ulong i = 0; i < K; i++) {
-      retval += char2Base(v % NUM_CHARS_FOR_BASES);
+      retval += base2Char(v % NUM_CHARS_FOR_BASES);
       v /= NUM_CHARS_FOR_BASES;
     }
     for(size_t i = 0; i < K / 2; i++) {

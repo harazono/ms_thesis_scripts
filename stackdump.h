@@ -88,9 +88,9 @@ public:
 					write(1,    "l\n", 2);
 					write(p[1], "l\n", 2);
 					waitgdb(fp[0]);
-					write(1,    "disas\n", 6);
-					write(p[1], "disas\n", 6);
-					waitgdb(fp[0]);
+					// write(1,    "disas\n", 6);
+					// write(p[1], "disas\n", 6);
+					// waitgdb(fp[0]);
 					write(1,    "quit\n", 5);
 					write(p[1], "quit\n", 5);
 					// sleep(3);
