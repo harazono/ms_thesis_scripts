@@ -31,8 +31,9 @@ class CIGAR #CIGARをパーズする。
 		tmpstring = String.new
 		tmpOp = Op.new
 		i = 0
+    reg = Regexp.new("[^MIDNSHPX]")
 		while cigar[i] != nil do
-			if cigar[i] =~ Regexp.new("[^MIDNSHPX]") then
+			if cigar[i] =~ reg then
 				tmpstring << (cigar[i])
 			else
 				tmpOp.length = tmpstring.to_i
