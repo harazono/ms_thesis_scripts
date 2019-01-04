@@ -58,12 +58,12 @@ void countKmerFrequencies (
     if(record.seq == "*") continue;
     // use only primary alignment and supplementary alignment and reverse compliment of them.
     // sample has many supplimentary alignment.
-    if(sam_flag & 2064 != sam_flag) continue;
-    if(!multiFASTA.count(sam.rname)) {
-      cerr << "SAM record says RNAME = '" << sam.rname << "', but the reference genome does not have '" << sam.rname << "'" << endl;
+    if(record.flag & 2064 != record.flag) continue;
+    if(!multiFASTA.count(record.rname)) {
+      cerr << "SAM record says RNAME = '" << record.rname << "', but the reference genome does not have '" << record.rname << "'" << endl;
       exit(2);
     }
-    cigar    = CIGAR.new(sam.cigar)
+    CIGAROPS cops = parseCIGARString(record.cigar);
     cerr << ++recordCount << " processed\r" << flush;
   }
   cerr << endl << "Done." << endl;
