@@ -207,6 +207,7 @@ samfile.each do |line|
 			when "S" then
 				#STDERR.print "ref_aligned.length = #{ref_aligned.length} query_aligned.length = #{query_aligned.length}\n" if i != 0
 			when "H" then
+
 			else
 				break
 		end
@@ -223,11 +224,11 @@ samfile.each do |line|
        query_aligned = revcomp(query_aligned)
 	end
 	while ref_aligned[i + kmer_size] != nil	 && query_aligned[i + kmer_size] != nil do
-		ref_kmer_str	 = ref_aligned[i, kmer_size]
+		ref_kmer_str   = ref_aligned[i, kmer_size]
 		query_kmer_str = query_aligned[i, kmer_size]
 
-		ref_idx				 = bases2coordinate(ref_kmer_str)
-		query_idx			 = bases2coordinate(query_kmer_str)
+		ref_idx   = bases2coordinate(ref_kmer_str)
+		query_idx = bases2coordinate(query_kmer_str)
 
 		kmer_mtx[ref_idx][query_idx] = kmer_mtx[ref_idx][query_idx] + 1
 		ref_kmer_mtx[ref_idx] = ref_kmer_mtx[ref_idx] + 1
@@ -260,8 +261,8 @@ STDERR.puts
 
 for i in 0..(5 ** kmer_size)-1 do
 	for j in 0..(5 ** kmer_size)-1 do
-		printf("%8f", (kmer_mtx[j][i] / ref_kmer_mtx[j].to_f / (5 ** kmer_size).to_f))
-		printf(", ") if j != (5 ** kmer_size)-1
+        printf("%8f", kmer_mtx[j][i].to_f / ref_kmer_mtx[j].to_f)
+		printf(", ") if j != (5 ** kmer_size) - 1
 	end
 	print "\n"
 end
