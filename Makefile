@@ -5,7 +5,7 @@ SOURCES := count_kmer.cpp
 TEST_SOURCES := kmer_library_test.cpp
 CXX := $(HOME)/local/bin/g++
 
-.PHONY: depend clean test
+.PHONY: depend clean test build_test
 
 all: count_kmer
 
@@ -27,4 +27,4 @@ depend:
 clean:
 	-rm *.o
 
--INCLUDE: $(DEPENDS)
+include $(DEPENDS)
