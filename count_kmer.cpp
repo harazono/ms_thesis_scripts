@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <vector>
+#include <map>
 #include <getopt.h>
 #include "kmer_library.h"
 
@@ -12,7 +14,7 @@ void error(const char* msg) {
   exit(2);
 }
 
-void print_usage_and_exit() {
+void printUsageAndExit() {
   fprintf(stderr, "Usage: count_kmer [options] <FASTA file name> <SAM file name>\n\n");
   fprintf(stderr, "Options:\n");
   fprintf(stderr, "\t--kmer,-k <SIZE>\tSpecifies the k-mer size\n");
@@ -20,18 +22,61 @@ void print_usage_and_exit() {
   exit(2);
 }
 
-void count_kmer_frequencies(
-  const char* fasta_file_name,
-  const char* sam_file_name,
-  uint kmer_size
+typedef string SequenceName;
+typedef map<SequenceName, BString> MultiFASTA;
+
+MultiFASTA loadFromFASTA(const string& inputFASTAFileName)
+{
+  MultiFASTA retval;
+  ifstream ifs(inputFASTAFileName.c_str());
+  if(ifs.fail()) {
+    cerr << "ERROR: Cannot open file '" << inputFASTAFileName << "'" << endl;
+    exit(2);
+  }
+  string tmp;
+  string currentSequenceName;
+  BString currentBString;
+  while(getline(ifs, tmp)) {
+    if(tmp.empty()) continue;
+    if(tmp[0] == '>') {
+      if(!currentSequenceName.empty()) {
+        retval[currentSequenceName] = currentBString;
+      }
+      currentSequenceName = tmp.substr(1);
+      currentBString.resize(0);
+    } else {
+      for(uint i = 0; i < tmp.size(); i++) {
+        currentBString.push_back(char2Base(tmp[i]));
+      }
+    }
+  }
+  if(!currentSequenceName.empty()) {
+    retval[currentSequenceName] = currentBString;
+  }
+  return retval;
+}
+
+void countKmerFrequencies (
+  const char* FASTAFileName,
+  const char* SAMFileName,
+  uint KmerSize
 )
 {
   fprintf(stderr, "===Parameters===\n");
-  fprintf(stderr, "Reference FASTA: %s\n", fasta_file_name);
-  fprintf(stderr, "Input SAM file : %s\n", sam_file_name);
-  fprintf(stderr, "K-mer size     : %d\n", kmer_size);
+  fprintf(stderr, "Reference FASTA: %s\n", FASTAFileName);
+  fprintf(stderr, "Input SAM file : %s\n", SAMFileName);
+  fprintf(stderr, "K-mer size     : %d\n", KmerSize);
   fprintf(stderr, "================\n");
+  fprintf(stderr, "\n");
+
+  fprintf(stderr, "Loading from the FASTA file ...\r");
+  const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
+  fprintf(stderr, "Done                           \n");
+  for(auto& it : multiFASTA) {
+    cout << it.first << ": " << it.second.size() << endl;
+  }
 }
+
 
 int main(int argc, char *argv[]){
   GDB_On_SEGV g(argv[0]);
@@ -62,11 +107,12 @@ int main(int argc, char *argv[]){
   }
   const int NUM_REQUIRED_ARGUMENTS = 2;
   if(optind + NUM_REQUIRED_ARGUMENTS != argc) {
-    print_usage_and_exit();
+    printUsageAndExit();
   }
   const char* fasta_file_name = argv[optind + 0];
   const char* sam_file_name   = argv[optind + 1];
 
-  count_kmer_frequencies(fasta_file_name, sam_file_name, kmer_size);
+  countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
   return 0;
 }
+
