@@ -4,3 +4,5 @@
 
 .depend.mk
 kenpin*.h
+*.o
+count_kmer
