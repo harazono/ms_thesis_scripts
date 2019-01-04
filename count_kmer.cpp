@@ -37,10 +37,23 @@ void countKmerFrequencies (
   fprintf(stderr, "Loading from the FASTA file ...\r");
   const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
   fprintf(stderr, "Done                           \n");
-  for(auto& it : multiFASTA) {
-    // cout << it.first << ": " << it.second.size() << endl;
-    cout << it.first << ": " << BString2String(it.second) << endl;
+  FastTSVParse ftp(SAMFileName);
+  if(!ftp) {
+    fprintf(stderr, "ERROR: Cannot open SAM file '%s'\n", SAMFileName);
+    exit(2);
   }
+  SAMRecord record;
+  size_t recordCount = 0;
+  while(ftp.readNextLine()){
+    const char* line = ftp.c_str();
+    const bool isEmptyLine = line[0] == '\0';
+    if(isEmptyLine) continue;
+    const bool isCommentLine = line[0] == '@';
+    if(isCommentLine) continue;
+    record.fill(ftp);
+    cerr << ++recordCount << " processed\r" << flush;
+  }
+  cerr << endl << "Done." << endl;
 }
 
 

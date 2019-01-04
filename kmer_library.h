@@ -138,4 +138,49 @@ public:
   }
 };
 
+struct SAMRecord {
+  std::string qname;
+  int flag;
+  std::string rname;
+  int pos;   ///< 0-origin position
+  int mapQ;
+  std::string cigar;
+  std::string rnext;
+  int pnext;
+  int tlen;
+  std::string seq;
+  std::string qual;
+
+  /// fill SAMRecord from the current line
+  /// @return true when the parsing succeeds
+  bool fill(FastTSVParse& ftp) {
+    // See: https://samtools.github.io/hts-specs/SAMv1.pdf for the detailed specification for SAM.
+    // Col Field Type
+    // 1 QNAME String
+    // 2 FLAG Int
+    // 3 RNAME String
+    // 4 POS Int
+    // 5 MAPQ Int
+    // 6 CIGAR String
+    // 7 RNEXT String
+    // 8 PNEXT Int
+    // 9 TLEN Int
+    // 10 SEQ String
+    // 11 QUAL String
+    if(ftp.size() < 11) return false;
+    qname = ftp.getString(0);
+    flag  = ftp.getInteger(1);
+    rname = ftp.getString(2);
+    pos   = ftp.getInteger(3) - 1;
+    mapQ  = ftp.getInteger(4);
+    cigar = ftp.getString(5);
+    rnext = ftp.getString(6);
+    pnext = ftp.getInteger(7);
+    tlen  = ftp.getInteger(8);
+    seq   = ftp.getString(9);
+    qual  = ftp.getString(10);
+    return true;
+  }
+};
+
 #endif // #ifndef _KMER_LIBRARY_HEADER

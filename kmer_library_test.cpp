@@ -61,6 +61,30 @@ TEST_F(MyLibraryTest, LoadMultiFASTA_Test) {
   EXPECT_STREQ(BString2String(mf.begin()->second).c_str(), "CGACTATTCC");
 }
 
+TEST_F(MyLibraryTest, ParseSAM_Test) {
+  FastTSVParse ftp("10.sam");
+  ASSERT_FALSE(!ftp);
+  while(true) {
+    ASSERT_TRUE(ftp.readNextLine());
+    if(ftp.c_str()[0] != '@') break;
+  }
+  SAMRecord r;
+  //cout << ftp.c_str() << endl;
+  //cout << ftp.size() << endl;
+  ASSERT_TRUE(r.fill(ftp));
+  EXPECT_STREQ(r.qname.c_str(), "testread");
+  EXPECT_STREQ(r.rname.c_str(), "testref");
+  EXPECT_EQ(r.flag, 0);
+  EXPECT_STREQ(r.cigar.c_str(), "10M");
+  EXPECT_STREQ(r.seq.c_str(), "CGTCTATTCC");
+  EXPECT_STREQ(r.qual.c_str(), "*");
+  EXPECT_STREQ(r.rnext.c_str(), "*");
+  EXPECT_EQ(r.tlen, 0);
+  EXPECT_EQ(r.pnext, 0);
+  EXPECT_EQ(r.mapQ, 60);
+  EXPECT_EQ(r.pos, 0);
+}
+
 int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);
