@@ -1,5 +1,8 @@
 #include "gtest/gtest.h"
+#include <string>
 #include "kmer_library.h"
+
+using namespace std;
 
 class MyLibraryTest : public ::testing::Test {
   protected:
@@ -12,6 +15,7 @@ class MyLibraryTest : public ::testing::Test {
 TEST_F(MyLibraryTest, KInt_Simple1_Test) {
   KInt<1> k1;
   EXPECT_EQ(k1, 0);
+  EXPECT_STREQ(k1.str().c_str(), "A");
   KInt<1> k2("A");
   EXPECT_EQ(k2, 0);
   KInt<1> k3("C");
@@ -48,4 +52,10 @@ TEST_F(MyLibraryTest, KInt_Simple3_Test) {
   EXPECT_EQ(k5, 72);
   KInt<3> k6("-AG");
   EXPECT_EQ(k6, 102);
+}
+
+int main(int argc, char **argv) {
+  GDB_On_SEGV g(argv[0]);
+  ::testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }

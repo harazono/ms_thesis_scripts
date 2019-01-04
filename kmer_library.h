@@ -39,7 +39,7 @@ inline Base char2Base(char inch)
     case '-':
       return 4;
     default:
-      MYASSERT_NEVERREACH_WD(DUMP(inch + 2));
+      MYASSERT_NEVERREACH_WD(DUMP(inch));
   }
 }
 
@@ -76,7 +76,7 @@ public:
   }
 
   /// Output string for debug
-  inline std::string c_str() const {
+  inline std::string str() const {
     std::string retval;
     uint64_t v = kint;
     for(ulong i = 0; i < K; i++) {
