@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <vector>
+#include <fstream>
 #include <algorithm>
 #include "stackdump.h"
 #include "cpas_debug.h"
@@ -47,6 +48,50 @@ inline char base2Char(Base b)
 {
   MYASSERT_WMD("Base must be 0 to 4", 0 <= b && b < 5, DUMP(b));
   return "ACGT-"[b];
+}
+
+inline std::string BString2String(const BString& b)
+{
+  std::string retval;
+  retval.resize(b.size());
+  for(uint i = 0; i < b.size(); i++) {
+    retval[i] = base2Char(b[i]);
+  }
+  return retval;
+}
+
+typedef std::string SequenceName;
+typedef std::map<SequenceName, BString> MultiFASTA;
+
+inline MultiFASTA loadFromFASTA(const std::string& inputFASTAFileName)
+{
+  MultiFASTA retval;
+  std::ifstream ifs(inputFASTAFileName.c_str());
+  if(ifs.fail()) {
+    std::cerr << "ERROR: Cannot open file '" << inputFASTAFileName << "'\n";
+    exit(2);
+  }
+  std::string tmp;
+  std::string currentSequenceName;
+  BString currentBString;
+  while(std::getline(ifs, tmp)) {
+    if(tmp.empty()) continue;
+    if(tmp[0] == '>') {
+      if(!currentSequenceName.empty()) {
+        retval[currentSequenceName] = currentBString;
+      }
+      currentSequenceName = tmp.substr(1);
+      currentBString.resize(0);
+    } else {
+      for(uint i = 0; i < tmp.size(); i++) {
+        currentBString.push_back(char2Base(tmp[i]));
+      }
+    }
+  }
+  if(!currentSequenceName.empty()) {
+    retval[currentSequenceName] = currentBString;
+  }
+  return retval;
 }
 
 /**

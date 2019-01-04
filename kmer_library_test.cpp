@@ -54,6 +54,13 @@ TEST_F(MyLibraryTest, KInt_Simple3_Test) {
   EXPECT_EQ(k6, 102);
 }
 
+TEST_F(MyLibraryTest, LoadMultiFASTA_Test) {
+  MultiFASTA mf = loadFromFASTA("10.ref");
+  EXPECT_EQ(mf.size(), 1);
+  EXPECT_STREQ(mf.begin()->first.c_str(), "testref");
+  EXPECT_STREQ(BString2String(mf.begin()->second).c_str(), "CGACTATTCC");
+}
+
 int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);

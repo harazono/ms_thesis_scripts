@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <cstdlib>
 #include <iostream>
-#include <fstream>
 #include <vector>
 #include <map>
 #include <getopt.h>
@@ -22,40 +21,6 @@ void printUsageAndExit() {
   exit(2);
 }
 
-typedef string SequenceName;
-typedef map<SequenceName, BString> MultiFASTA;
-
-MultiFASTA loadFromFASTA(const string& inputFASTAFileName)
-{
-  MultiFASTA retval;
-  ifstream ifs(inputFASTAFileName.c_str());
-  if(ifs.fail()) {
-    cerr << "ERROR: Cannot open file '" << inputFASTAFileName << "'" << endl;
-    exit(2);
-  }
-  string tmp;
-  string currentSequenceName;
-  BString currentBString;
-  while(getline(ifs, tmp)) {
-    if(tmp.empty()) continue;
-    if(tmp[0] == '>') {
-      if(!currentSequenceName.empty()) {
-        retval[currentSequenceName] = currentBString;
-      }
-      currentSequenceName = tmp.substr(1);
-      currentBString.resize(0);
-    } else {
-      for(uint i = 0; i < tmp.size(); i++) {
-        currentBString.push_back(char2Base(tmp[i]));
-      }
-    }
-  }
-  if(!currentSequenceName.empty()) {
-    retval[currentSequenceName] = currentBString;
-  }
-  return retval;
-}
-
 void countKmerFrequencies (
   const char* FASTAFileName,
   const char* SAMFileName,
@@ -73,7 +38,8 @@ void countKmerFrequencies (
   const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
   fprintf(stderr, "Done                           \n");
   for(auto& it : multiFASTA) {
-    cout << it.first << ": " << it.second.size() << endl;
+    // cout << it.first << ": " << it.second.size() << endl;
+    cout << it.first << ": " << BString2String(it.second) << endl;
   }
 }
 
