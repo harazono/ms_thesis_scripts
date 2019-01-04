@@ -6,6 +6,7 @@
 #include <vector>
 #include <fstream>
 #include <algorithm>
+#include <cctype>
 #include "stackdump.h"
 #include "cpas_debug.h"
 #include "cpas_tsv.h"
@@ -137,6 +138,60 @@ public:
     return kint;
   }
 };
+
+struct CIGAROp {
+  char op;
+  int len;
+  inline CIGAROp() {}
+  inline CIGAROp(char op, int len) : op(op), len(len) {}
+};
+
+typedef std::vector<CIGAROp> CIGAROPS;
+
+inline std::string CIGAROps2String(const CIGAROPS& cops) {
+  std::string retval;
+  char buf[8];
+  for(auto& x: cops) {
+    std::sprintf(buf, "%d%c", x.len, x.op);
+    retval += buf;
+  }
+  return retval;
+}
+
+inline CIGAROPS parseCIGARString(const std::string& cigarString) {
+  CIGAROPS retval;
+  const std::string& s = cigarString;
+  for(size_t i = 0; i < s.size(); ++i) {
+    // Parse digits
+    int num = 0;
+    while(std::isdigit(s[i])) {
+      num = num * 10 + s[i] - '0';
+      i++;
+    }
+    if(num <= 0) {
+      std::cerr << "CIGAR op size must be positive (num = " << num << ", cigar = '" << s << "'" << std::endl;
+      std::exit(2);
+    }
+    char op = s[i];
+    switch(op) {
+    case 'I':
+    case 'D':
+    case 'M':
+    case 'X':
+    case '=':
+    case 'H':
+    case 'S':
+    case 'P':
+    case 'N':
+      break;
+    default:
+      std::cerr << "CIGAR type '" << op << "' is not valid." << std::endl;
+      exit(2);
+    }
+    retval.push_back(CIGAROp(op, num));
+  }
+  return retval;
+}
 
 struct SAMRecord {
   std::string qname;

@@ -85,6 +85,13 @@ TEST_F(MyLibraryTest, ParseSAM_Test) {
   EXPECT_EQ(r.pos, 0);
 }
 
+TEST_F(MyLibraryTest, ParseCIGAR_Simple1_Test) {
+  CIGAROPS ops = parseCIGARString("1M");
+  ASSERT_EQ(ops.size(), 1);
+  EXPECT_EQ(ops[0].op, 'M');
+  EXPECT_EQ(ops[0].len, 1);
+}
+
 int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);

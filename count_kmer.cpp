@@ -50,7 +50,20 @@ void countKmerFrequencies (
     if(isEmptyLine) continue;
     const bool isCommentLine = line[0] == '@';
     if(isCommentLine) continue;
-    record.fill(ftp);
+    if(!record.fill(ftp)) {
+      cerr << "SAM Parsing ERROR at line " << ftp.getLineNumber();
+      exit(2);
+    }
+    if(record.rname == "*") continue;
+    if(record.seq == "*") continue;
+    // use only primary alignment and supplementary alignment and reverse compliment of them.
+    // sample has many supplimentary alignment.
+    if(sam_flag & 2064 != sam_flag) continue;
+    if(!multiFASTA.count(sam.rname)) {
+      cerr << "SAM record says RNAME = '" << sam.rname << "', but the reference genome does not have '" << sam.rname << "'" << endl;
+      exit(2);
+    }
+    cigar    = CIGAR.new(sam.cigar)
     cerr << ++recordCount << " processed\r" << flush;
   }
   cerr << endl << "Done." << endl;
