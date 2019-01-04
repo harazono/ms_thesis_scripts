@@ -92,6 +92,17 @@ TEST_F(MyLibraryTest, ParseCIGAR_Simple1_Test) {
   EXPECT_EQ(ops[0].len, 1);
 }
 
+TEST_F(MyLibraryTest, ParseCIGAR_Simple2_Test) {
+  CIGAROPS ops = parseCIGARString("4S21M412D");
+  ASSERT_EQ(ops.size(), 3);
+  EXPECT_EQ(ops[0].op, 'S');
+  EXPECT_EQ(ops[0].len, 4);
+  EXPECT_EQ(ops[1].op, 'M');
+  EXPECT_EQ(ops[1].len, 21);
+  EXPECT_EQ(ops[2].op, 'D');
+  EXPECT_EQ(ops[2].len, 412);
+}
+
 int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);
