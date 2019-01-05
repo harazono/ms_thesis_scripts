@@ -42,6 +42,24 @@ void countKmerFrequencies (
     fprintf(stderr, "ERROR: Cannot open SAM file '%s'\n", SAMFileName);
     exit(2);
   }
+
+
+  int tablesize = 1;
+  for(int i = 0; i < KmerSize; i++){
+    tablesize *= 5;
+  }
+
+  int *kmer_kmer_table;
+  kmer_kmer_table = new int[tablesize * tablesize];
+  for(int i = 0; i < tablesize * tablesize; i++){
+    kmer_kmer_table[i] = 0;
+  }
+  int *kmer_table;
+  kmer_table = new int[tablesize];
+  for(int i = 0; i < tablesize;  i++){
+    kmer_table[i] = 0;
+  }
+
   SAMRecord record;
   size_t recordCount = 0;
   while(ftp.readNextLine()){
@@ -83,20 +101,16 @@ void countKmerFrequencies (
       revCompBString(ras);
       revCompBString(qas);
     }
-    //cout << "refAlignedBS   :'" << BString2String(ras) << "'" << endl;
-    //cout << "queryAlignedBS :'" << BString2String(qas) << "'" << endl;
-    
-    
-    
-    
     // count up # of kmer-kmer occurence.
-    
-    
-    
-    
+    size_t aligned_len = BString2String(ras).size();
+    for(size_t idx = 0; idx < aligned_len - KmerSize; idx++){
+      //ref_kmer = ras[idx]~ras[idx + KmerSize];
+      //KInt<KmerSize> refidx("AAA");
+
+    }
     // divide # of
 
-    //cerr << ++recordCount << " processed\r" << flush;
+    cerr << ++recordCount << " processed\r" << flush;
   }
   cerr << endl << "Done." << endl;
 }
