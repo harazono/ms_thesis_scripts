@@ -59,15 +59,24 @@ void countKmerFrequencies (
     // use only primary alignment and supplementary alignment and reverse compliment of them.
     // sample has many supplimentary alignment.
     if(record.flag & 2064 != record.flag) continue;
-    
-    for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr) {
-      std::cout << "key = '" << itr->first << "'" << endl;
-    }
-    std::cerr << BString2String(multiFASTA.at(record.rname)) << endl;
+
+    //for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr) {
+      //std::cout << "key = " << itr->first           // キーを表示
+      //<< ", val = " << BString2String(itr->second) << "\n";    // 値を表示
+    //}
+    std::cout << "'" << multiFASTA.begin()->first << "'" << endl;
+    std::cout << "'" << record.rname << "'" << endl;
+    BString foo = multiFASTA.at("CP009685.1");
+    //std::cout << BString2String(foo) << endl;
+
+
     if(!multiFASTA.count(record.rname.c_str())) {
       cerr << "SAM record says RNAME = '" << record.rname << "', but the reference genome does not have '" << record.rname << "'" << endl;
       exit(2);
     }
+
+
+
     CIGAROPS cops = parseCIGARString(record.cigar);
     cerr << ++recordCount << " processed\r" << flush;
     // get aligned sequence at here
