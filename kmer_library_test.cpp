@@ -61,6 +61,12 @@ TEST_F(MyLibraryTest, LoadMultiFASTA_Test) {
   EXPECT_STREQ(BString2String(mf.begin()->second).c_str(), "CGACTATTCC");
 }
 
+
+TEST_F(MyLibraryTest, SplitBy1stSpace_Test) {
+  std::string head = splitBy1stSpace("AAA WWW");
+  EXPECT_STREQ(head.c_str(), "AAA");
+}
+
 TEST_F(MyLibraryTest, ParseSAM_Test) {
   FastTSVParse ftp("10.sam");
   ASSERT_FALSE(!ftp);
@@ -131,12 +137,23 @@ TEST_F(MyLibraryTest, GenerateAlignmentFromCIGAR_Test) {
 }
 
 TEST_F(MyLibraryTest,revComp_Test){
-  const string preSeq   = "AAAC";
-  const BString preBSeq = String2BString(preSeq);
-  const BString revBSeq = revCompBString(preBSeq);
-  const string ansSeq   = BString2String(revBSeq);
+  string preSeq   = "AAAC";
+  BString preBSeq = String2BString(preSeq);
+  BString revBSeq = revCompBString(preBSeq);
+  string ansSeq   = BString2String(revBSeq);
   EXPECT_STREQ(ansSeq.c_str(), "GTTT");
 
+  preSeq   = "A";
+  preBSeq  = String2BString(preSeq);
+  revBSeq  = revCompBString(preBSeq);
+  ansSeq   = BString2String(revBSeq);
+  EXPECT_STREQ(ansSeq.c_str(), "T");
+
+  preSeq   = "CGTGAAA";
+  preBSeq  = String2BString(preSeq);
+  revBSeq  = revCompBString(preBSeq);
+  ansSeq   = BString2String(revBSeq);
+  EXPECT_STREQ(ansSeq.c_str(), "TTTCACG");
 }
 
 int main(int argc, char **argv) {

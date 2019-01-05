@@ -72,6 +72,26 @@ inline BString String2BString(const std::string& s)
   return retval;
 }
 
+
+
+std::string splitBy1stSpace(const std::string s) {
+  std::string retval;
+  retval.resize(s.size());
+  for (int i = 0; i < s.size(); i++) {
+    if (s[i] != ' ') {
+        retval[i] = s[i];
+      }else{
+        retval[i] = '\0';
+        return retval;
+        break;
+      }
+  }
+  return retval;
+}
+
+
+
+
 typedef std::string SequenceName;
 typedef std::map<SequenceName, BString> MultiFASTA;
 
@@ -92,7 +112,7 @@ inline MultiFASTA loadFromFASTA(const std::string& inputFASTAFileName)
       if(!currentSequenceName.empty()) {
         retval[currentSequenceName] = currentBString;
       }
-      currentSequenceName = tmp.substr(1);
+      currentSequenceName = splitBy1stSpace(tmp.substr(1));
       currentBString.resize(0);
     } else {
       for(uint i = 0; i < tmp.size(); i++) {
@@ -272,6 +292,7 @@ inline void generateAlignmentSequencesFromCIGARAndSeqs(
   }
 }
 
+
 struct SAMRecord {
   std::string qname;
   int flag;
@@ -317,13 +338,40 @@ struct SAMRecord {
   }
 };
 
+
+inline Base Base2CompBase(Base inb)
+{
+  switch(inb) {
+    case 0:     //when got 'A'
+      return 3; //return   'T'
+
+    case 1:     //when got 'C'
+      return 2; //retern   'G'
+
+    case 2:     //when got 'G'
+      return 1; //return   'C'
+
+    case 3:     //when got 'T'
+      return 0; //return   'A'
+    //case '-':
+      //return GAP_BASE;
+    default:
+      MYASSERT_NEVERREACH_WD(DUMP(int(inb)));
+  }
+}
+
+
 inline BString revCompBString(BString b)
 {
   BString retval;
   size_t stringLength = b.size();
   retval.resize(stringLength);
-
-
+  for(size_t idx = 0; idx < stringLength; idx++){
+    retval[idx] = Base2CompBase(b[idx]);
+  }
+  for(size_t i = 0; i < stringLength / 2; i++) {
+    std::swap(retval[i], retval[stringLength - 1 - i]);
+  }
   return retval;
 }
 

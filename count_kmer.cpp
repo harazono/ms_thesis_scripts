@@ -59,12 +59,41 @@ void countKmerFrequencies (
     // use only primary alignment and supplementary alignment and reverse compliment of them.
     // sample has many supplimentary alignment.
     if(record.flag & 2064 != record.flag) continue;
-    if(!multiFASTA.count(record.rname)) {
+    
+    for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr) {
+      std::cout << "key = '" << itr->first << "'" << endl;
+    }
+    std::cerr << BString2String(multiFASTA.at(record.rname)) << endl;
+    if(!multiFASTA.count(record.rname.c_str())) {
       cerr << "SAM record says RNAME = '" << record.rname << "', but the reference genome does not have '" << record.rname << "'" << endl;
       exit(2);
     }
     CIGAROPS cops = parseCIGARString(record.cigar);
     cerr << ++recordCount << " processed\r" << flush;
+    // get aligned sequence at here
+
+    BString refBS           = multiFASTA.at(record.rname);
+    BString queryBS         = String2BString(record.seq);
+    const int refStartPos   = cops[0].op == 'H' ? 0 : cops[0].len - 1;//if alignment begins from H then 0 else length pf Soft clip
+    const int queryStartPos = record.pos;
+    BString ras;
+    BString qas;
+
+    generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
+    cerr << "ras : '" << BString2String(ras) << "'\n" << endl;
+    cerr << "qas : '" << BString2String(qas) << "'\n" << endl;
+    // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
+    
+    
+    
+    
+    // count up # of kmer-kmer occurence.
+    
+    
+    
+    
+    // divide # of 
+
   }
   cerr << endl << "Done." << endl;
 }
