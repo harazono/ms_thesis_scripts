@@ -36,6 +36,34 @@ struct FrequencyTable {
     MYASSERT_WMD("Out of range (q)", q < tablesize, DUMP(q));
     return kmer_kmer_table[r * tablesize + q];
   }
+  void outputAsBinaryTable(const string& outputFileName)
+  {
+    const char *fn = outputFileName.c_str();
+    FILE *fle = fopen(fn, "wb");
+    if(fle == NULL) {
+      fprintf(stderr, "ERROR: Cannot open binary table file '%s'\n", fn);
+      exit(2);
+    }
+    //// FILE FORMAT:
+    ////  offset  0: 'BINFREQT' (8 bytes)
+    ////  offset  8: k-mer size (8 bytes)
+    ////  offset 16: sizeof(Frequency) (8 bytes)
+    ////  offset 24: table_size (8 bytes)
+    ////  offset 32: table (8 x table_size bytes)
+    static const char MAGIC_STRING[] = "BINFREQT";
+    MYASSERT_WMD("MAGIC_STRING must be 8 bytes", sizeof(MAGIC_STRING) - 1 == 8, DUMP(MAGIC_STRING));
+    fwrite(MAGIC_STRING, sizeof(MAGIC_STRING) - 1, 1, fle);
+    size_t kmer_size = KMERSIZE;
+    MYASSERT_WMD("sizeof(size_t) must be 8", sizeof(size_t) == 8, DUMP(sizeof(size_t)));
+    fwrite(&kmer_size, sizeof(kmer_size), 1, fle);
+    size_t size_of_frequency = sizeof(Frequency);
+    fwrite(&size_of_frequency, sizeof(size_of_frequency), 1, fle);
+    size_t var_table_size = tablesize * tablesize;
+    fwrite(&var_table_size, sizeof(var_table_size), 1, fle);
+    MYASSERT_WMD("var_table_size == kmer_kmer_table.size()", var_table_size == kmer_kmer_table.size(), DUMP(var_table_size, tablesize, kmer_kmer_table.size()));
+    fwrite(&*kmer_kmer_table.begin(), sizeof(Frequency) * kmer_kmer_table.size(), 1, fle);
+    fclose(fle);
+  }
   void countAlignment(
     const BString& ras,
     const BString& qas
@@ -83,7 +111,9 @@ public:
   void countKmerFrequencies (
     const char* FASTAFileName,
     const char* SAMFileName,
-    uint KmerSize
+    uint KmerSize,
+    const bool outputInCSV,
+    const string binaryOutputFileName ///< empty() if --binary is not given
   )
   {
     fprintf(stderr, "===Parameters===\n");
@@ -153,7 +183,12 @@ public:
     }
     cerr << recordCount << " processed\n";
     cerr << "Done." << endl;
-    printTable();
+    if(outputInCSV) {
+      printTable();
+    }
+    if(!binaryOutputFileName.empty()) {
+      outputAsBinaryTable(binaryOutputFileName);
+    }
   }
 
 
@@ -164,19 +199,28 @@ int main(int argc, char *argv[]){
   GDB_On_SEGV g(argv[0]);
 
   struct option longopts[] = {
-    // { "add",    no_argument,       NULL, 'k' },
-    // { "delete", optional_argument, NULL, 'd' },
-    { "kmer",  required_argument, NULL,     'k' },
-    { 0,        0,                   0,      0  },
+    { "csv"       , no_argument       , NULL , 'c' } ,
+    // { "delete" , optional_argument , NULL , 'd' } ,
+    { "kmer"      , required_argument , NULL , 'k' } ,
+    { "binary"    , required_argument , NULL , 'b' } ,
+    { 0           , 0                 , 0    , 0  }  ,
   };
 
   /// PARAMETERS ///
   int kmer_size = 1;
+  bool output_in_csv = false;
+  string binary_output_file_name;
   //////////////////
   int opt;
   int longindex;
   while ((opt = getopt_long(argc, argv, "k:", longopts, &longindex)) != -1) {
     switch (opt) {
+    case 'b':
+      binary_output_file_name = optarg;
+      break;
+    case 'c':
+      output_in_csv = true;
+      break;
     case 'k':
       kmer_size = atoi(optarg);
       if(kmer_size < 1 || 6 < kmer_size) {
@@ -194,46 +238,17 @@ int main(int argc, char *argv[]){
   const char* fasta_file_name = argv[optind + 0];
   const char* sam_file_name   = argv[optind + 1];
 
+  #define FT() ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size, output_in_csv, binary_output_file_name)
   switch(kmer_size) {
-    case 1:
-      {
-        FrequencyTable<1> ft;
-        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
-      }
-      break;
-    case 2:
-      {
-        FrequencyTable<2> ft;
-        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
-      }
-      break;
-    case 3:
-      {
-        FrequencyTable<3> ft;
-        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
-      }
-      break;
-    case 4:
-      {
-        FrequencyTable<4> ft;
-        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
-      }
-      break;
-    case 5:
-      {
-        FrequencyTable<5> ft;
-        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
-      }
-      break;
-    case 6:
-      {
-        FrequencyTable<6> ft;
-        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
-      }
-      break;
-    default:
-      MYASSERT_NEVERREACH();
+    case 1: { FrequencyTable<1> ft; FT(); } break;
+    case 2: { FrequencyTable<2> ft; FT(); } break;
+    case 3: { FrequencyTable<3> ft; FT(); } break;
+    case 4: { FrequencyTable<4> ft; FT(); } break;
+    case 5: { FrequencyTable<5> ft; FT(); } break;
+    case 6: { FrequencyTable<6> ft; FT(); } break;
+    default: MYASSERT_NEVERREACH();
   }
+  #undef FT
   return 0;
 }
 
