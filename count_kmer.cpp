@@ -74,15 +74,19 @@ void countKmerFrequencies (
     BString refBS           = multiFASTA.at(record.rname);
     BString queryBS         = String2BString(record.seq);
     const int refStartPos   = record.pos;
-    const int queryStartPos = cops[0].op == 'H' ? 0 : cops[0].len - 1;//if alignment begins from H then 0 else length pf Soft clip
+    const int queryStartPos = 0; // generateAlignmentSequencesFromCIGARAndSeqs() will manege first Softclip / Hardclip
     BString ras, qas;
     //cout << "refBS  :'" << BString2String(refBS)   << "'" << endl;
     //cout << "queryBS:'" << BString2String(queryBS) << "'" << endl;
     generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
-    //cout << "ras : '" << BString2String(ras) << "'" << endl;
-    //cout << "qas : '" << BString2String(qas) << "'" << endl;
-
-
+    cout << "ras : '" << BString2String(ras) << "'" << endl;
+    cout << "qas : '" << BString2String(qas) << "'" << endl;
+    
+    BString &refAlignedBS, &queryAlignedBS;
+    if(record.flag & 16 != record.flag){
+      revCompBString(ras);
+      revCompBString(qas);
+    }
 
     // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
     

@@ -364,18 +364,12 @@ inline Base Base2CompBase(Base inb)
 }
 
 
-inline BString revCompBString(BString b)
+inline void revCompBString(BString b)
 {
-  BString retval;
   size_t stringLength = b.size();
-  retval.resize(stringLength);
-  for(size_t idx = 0; idx < stringLength; idx++){
-    retval[idx] = Base2CompBase(b[idx]);
-  }
   for(size_t i = 0; i < stringLength / 2; i++) {
-    std::swap(retval[i], retval[stringLength - 1 - i]);
+    std::swap(Base2CompBase(b[i]), Base2CompBase(b[stringLength - 1 - i]));
   }
-  return retval;
 }
 
 
