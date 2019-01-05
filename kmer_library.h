@@ -317,4 +317,15 @@ struct SAMRecord {
   }
 };
 
+inline BString revCompBString(BString b)
+{
+  BString retval;
+  size_t stringLength = b.size();
+  retval.resize(stringLength);
+
+
+  return retval;
+}
+
+
 #endif // #ifndef _KMER_LIBRARY_HEADER

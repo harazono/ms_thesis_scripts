@@ -130,6 +130,15 @@ TEST_F(MyLibraryTest, GenerateAlignmentFromCIGAR_Test) {
   EXPECT_STREQ(qass.c_str(), "CG-GCAG");
 }
 
+TEST_F(MyLibraryTest,revComp_Test){
+  const string preSeq = "AAAC";
+  const BString pre   = String2BString(preSeq);
+  const BString rev   = revCompBString(pre);
+  const BString ans   = BString2String(rev);
+  EXPECT_STREQ(ans.c_str(), "GTTT");
+
+}
+
 int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);
