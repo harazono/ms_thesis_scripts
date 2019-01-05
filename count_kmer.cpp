@@ -5,6 +5,7 @@
 #include <map>
 #include <getopt.h>
 #include "kmer_library.h"
+#include "cpas_debug.h"
 
 using namespace std;
 
@@ -21,99 +22,114 @@ void printUsageAndExit() {
   exit(2);
 }
 
-void countKmerFrequencies (
-  const char* FASTAFileName,
-  const char* SAMFileName,
-  uint KmerSize
-)
-{
-  fprintf(stderr, "===Parameters===\n");
-  fprintf(stderr, "Reference FASTA: %s\n", FASTAFileName);
-  fprintf(stderr, "Input SAM file : %s\n", SAMFileName);
-  fprintf(stderr, "K-mer size     : %d\n", KmerSize);
-  fprintf(stderr, "================\n");
-  fprintf(stderr, "\n");
+template<uint KMERSIZE>
+struct FrequencyTable {
+  static const size_t tablesize = ipow(5, KMERSIZE);
+  typedef int Frequency;
 
-  fprintf(stderr, "Loading from the FASTA file ...\r");
-  const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
-  fprintf(stderr, "Done                           \n");
-  FastTSVParse ftp(SAMFileName);
-  if(!ftp) {
-    fprintf(stderr, "ERROR: Cannot open SAM file '%s'\n", SAMFileName);
-    exit(2);
+  vector<Frequency> kmer_table; ///< Reference side
+  vector<Frequency> kmer_kmer_table; ///< The first dimension is reference, the second is query.
+
+  inline Frequency& kk(size_t r, size_t q) {
+    MYASSERT_WMD("Out of range (r)", r < tablesize, DUMP(r));
+    MYASSERT_WMD("Out of range (q)", q < tablesize, DUMP(q));
+    return kmer_kmer_table[r * tablesize + q];
   }
-
-
-  int tablesize = 1;
-  for(int i = 0; i < KmerSize; i++){
-    tablesize *= 5;
-  }
-
-  int *kmer_kmer_table;
-  kmer_kmer_table = new int[tablesize * tablesize];
-  for(int i = 0; i < tablesize * tablesize; i++){
-    kmer_kmer_table[i] = 0;
-  }
-  int *kmer_table;
-  kmer_table = new int[tablesize];
-  for(int i = 0; i < tablesize;  i++){
-    kmer_table[i] = 0;
-  }
-
-  SAMRecord record;
-  size_t recordCount = 0;
-  while(ftp.readNextLine()){
-    const char* line = ftp.c_str();
-    const bool isEmptyLine = line[0] == '\0';
-    if(isEmptyLine) continue;
-    const bool isCommentLine = line[0] == '@';
-    if(isCommentLine) continue;
-    if(!record.fill(ftp)) {
-      cerr << "SAM Parsing ERROR at line " << ftp.getLineNumber();
-      exit(2);
+  void countAlignment(
+    const BString& ras,
+    const BString& qas
+  )
+  {
+    MYASSERT_WMD("ras.size() must be qas.size()", ras.size() == qas.size(), DUMP(ras.size(), qas.size()));
+    const size_t aligned_len = ras.size();
+    if(aligned_len < KMERSIZE) return;
+    KInt<KMERSIZE> rki, qki;
+    for(size_t i = 0; i < KMERSIZE - 1; ++i) {
+      rki.ShiftIn(ras[i]);
+      qki.ShiftIn(qas[i]);
     }
-    if(record.rname == "*") continue;
-    if(record.seq == "*") continue;
-    // use only primary alignment and supplementary alignment and reverse compliment of them.
-    // sample has many supplimentary alignment.
-    if((record.flag & 2064) != record.flag) continue;
+    for(size_t i = KMERSIZE - 1; i <= aligned_len - KMERSIZE; i++){
+      rki.ShiftIn(ras[i]);
+      qki.ShiftIn(qas[i]);
+      kmer_table[rki]++;
+      kk(rki, qki)++;
+    }
+  }
+public:
+  FrequencyTable() : kmer_table(tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0) {}
+  void countKmerFrequencies (
+    const char* FASTAFileName,
+    const char* SAMFileName,
+    uint KmerSize
+  )
+  {
+    fprintf(stderr, "===Parameters===\n");
+    fprintf(stderr, "Reference FASTA: %s\n", FASTAFileName);
+    fprintf(stderr, "Input SAM file : %s\n", SAMFileName);
+    fprintf(stderr, "K-mer size     : %d\n", KmerSize);
+    fprintf(stderr, "================\n");
+    fprintf(stderr, "\n");
 
-
-    if(!multiFASTA.count(record.rname.c_str())) {
-      cerr << "SAM record says RNAME = '" << record.rname << "', but the reference genome does not have '" << record.rname << "'" << endl;
+    fprintf(stderr, "Loading from the FASTA file ...\r");
+    const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
+    fprintf(stderr, "Done                           \n");
+    FastTSVParse ftp(SAMFileName);
+    if(!ftp) {
+      fprintf(stderr, "ERROR: Cannot open SAM file '%s'\n", SAMFileName);
       exit(2);
     }
 
+    SAMRecord record;
+    size_t recordCount = 0;
+    while(ftp.readNextLine()){
+      const char* line = ftp.c_str();
+      const bool isEmptyLine = line[0] == '\0';
+      if(isEmptyLine) continue;
+      const bool isCommentLine = line[0] == '@';
+      if(isCommentLine) continue;
+      if(!record.fill(ftp)) {
+        cerr << "SAM Parsing ERROR at line " << ftp.getLineNumber();
+        exit(2);
+      }
+      if(record.rname == "*") continue;
+      if(record.seq == "*") continue;
+      // use only primary alignment and supplementary alignment and reverse compliment of them.
+      // sample has many supplimentary alignment.
+      if((record.flag & 2064) != record.flag) continue;
 
-    // get aligned sequence at here
 
-    const CIGAROPS cops     = parseCIGARString(record.cigar);
+      if(!multiFASTA.count(record.rname.c_str())) {
+        cerr << "SAM record says RNAME = '" << record.rname << "', but the reference genome does not have '" << record.rname << "'" << endl;
+        exit(2);
+      }
 
-    BString refBS           = multiFASTA.at(record.rname);
-    BString queryBS         = String2BString(record.seq);
-    const int refStartPos   = record.pos;
-    const int queryStartPos = 0; // generateAlignmentSequencesFromCIGARAndSeqs() will manege first Softclip / Hardclip
-    BString ras, qas;
-    generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
 
-    // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
-    if((record.flag & 16) != 16){
-      revCompBString(ras);
-      revCompBString(qas);
+      // get aligned sequence at here
+      const CIGAROPS cops     = parseCIGARString(record.cigar);
+
+      BString refBS           = multiFASTA.at(record.rname);
+      BString queryBS         = String2BString(record.seq);
+      const int refStartPos   = record.pos;
+      const int queryStartPos = 0; // generateAlignmentSequencesFromCIGARAndSeqs() will manege first Softclip / Hardclip
+      BString ras, qas;
+      generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
+
+      // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
+      if((record.flag & 16) != 16){
+        revCompBString(ras);
+        revCompBString(qas);
+      }
+      // count up # of kmer-kmer occurence.
+      countAlignment(ras, qas);
+      // divide # of
+
+      cerr << ++recordCount << " processed\r" << flush;
     }
-    // count up # of kmer-kmer occurence.
-    size_t aligned_len = BString2String(ras).size();
-    for(size_t idx = 0; idx < aligned_len - KmerSize; idx++){
-      //ref_kmer = ras[idx]~ras[idx + KmerSize];
-      //KInt<KmerSize> refidx("AAA");
-
-    }
-    // divide # of
-
-    cerr << ++recordCount << " processed\r" << flush;
+    cerr << endl << "Done." << endl;
   }
-  cerr << endl << "Done." << endl;
-}
+
+
+};
 
 
 int main(int argc, char *argv[]){
@@ -150,7 +166,46 @@ int main(int argc, char *argv[]){
   const char* fasta_file_name = argv[optind + 0];
   const char* sam_file_name   = argv[optind + 1];
 
-  countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+  switch(kmer_size) {
+    case 1:
+      {
+        FrequencyTable<1> ft;
+        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+      }
+      break;
+    case 2:
+      {
+        FrequencyTable<2> ft;
+        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+      }
+      break;
+    case 3:
+      {
+        FrequencyTable<3> ft;
+        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+      }
+      break;
+    case 4:
+      {
+        FrequencyTable<4> ft;
+        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+      }
+      break;
+    case 5:
+      {
+        FrequencyTable<5> ft;
+        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+      }
+      break;
+    case 6:
+      {
+        FrequencyTable<6> ft;
+        ft.countKmerFrequencies(fasta_file_name, sam_file_name, kmer_size);
+      }
+      break;
+    default:
+      MYASSERT_NEVERREACH();
+  }
   return 0;
 }
 
