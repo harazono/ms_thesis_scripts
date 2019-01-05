@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <getopt.h>
+#include <math.h>
 #include "kmer_library.h"
 #include "cpas_debug.h"
 
@@ -55,6 +56,28 @@ struct FrequencyTable {
       kk(rki, qki)++;
     }
   }
+  void printTable(){
+    vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0); ///< divided by kmer_table
+    auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
+      MYASSERT_WMD("Out of range (r)", r < tablesize, DUMP(r));
+      MYASSERT_WMD("Out of range (q)", q < tablesize, DUMP(q));
+      return kmer_kmer_prob_table[r * tablesize + q];
+    };
+    for(int i = 0; i < tablesize; i++){
+      for(int j = 0; j < tablesize; j++){
+        kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(kmer_table[i]);
+      }
+    }
+    for(int i = 0; i < tablesize; i++){
+      for(int j = 0; j < tablesize; j++){
+        fprintf(stdout, "%lf", log10(kkp(j, i)));
+        if(j != tablesize) fprintf(stdout, ", ");
+      }
+      fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "\n");
+  }
+
 public:
   FrequencyTable() : kmer_table(tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0) {}
   void countKmerFrequencies (
@@ -123,9 +146,14 @@ public:
       countAlignment(ras, qas);
       // divide # of
 
-      cerr << ++recordCount << " processed\r" << flush;
+      ++recordCount;
+      if(recordCount % 100 == 0) {
+        cerr << recordCount << " processed\r" << flush;
+      }
     }
-    cerr << endl << "Done." << endl;
+    cerr << recordCount << " processed\n";
+    cerr << "Done." << endl;
+    printTable();
   }
 
 
