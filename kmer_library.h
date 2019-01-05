@@ -76,16 +76,19 @@ inline BString String2BString(const std::string& s)
 
 std::string splitBy1stSpace(const std::string s) {
   std::string retval;
-  retval.resize(s.size());
+  int len = 0;
   for (int i = 0; i < s.size(); i++) {
     if (s[i] != ' ') {
-        retval[i] = s[i];
+        len++;
       }else{
-        retval[i] = '\0';
-        return retval;
         break;
       }
   }
+  retval.resize(len);
+  for (int i = 0; i < len; i++){
+    retval[i] = s[i];
+  }
+  retval[len] = '\0';
   return retval;
 }
 

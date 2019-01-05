@@ -60,15 +60,6 @@ void countKmerFrequencies (
     // sample has many supplimentary alignment.
     if(record.flag & 2064 != record.flag) continue;
 
-    //for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr) {
-      //std::cout << "key = " << itr->first           // キーを表示
-      //<< ", val = " << BString2String(itr->second) << "\n";    // 値を表示
-    //}
-    std::cout << "'" << multiFASTA.begin()->first << "'" << endl;
-    std::cout << "'" << record.rname << "'" << endl;
-    BString foo = multiFASTA.at("CP009685.1");
-    //std::cout << BString2String(foo) << endl;
-
 
     if(!multiFASTA.count(record.rname.c_str())) {
       cerr << "SAM record says RNAME = '" << record.rname << "', but the reference genome does not have '" << record.rname << "'" << endl;
@@ -76,21 +67,23 @@ void countKmerFrequencies (
     }
 
 
-
-    CIGAROPS cops = parseCIGARString(record.cigar);
-    cerr << ++recordCount << " processed\r" << flush;
     // get aligned sequence at here
+
+    const CIGAROPS cops     = parseCIGARString(record.cigar);
 
     BString refBS           = multiFASTA.at(record.rname);
     BString queryBS         = String2BString(record.seq);
-    const int refStartPos   = cops[0].op == 'H' ? 0 : cops[0].len - 1;//if alignment begins from H then 0 else length pf Soft clip
-    const int queryStartPos = record.pos;
-    BString ras;
-    BString qas;
-
+    const int refStartPos   = record.pos;
+    const int queryStartPos = cops[0].op == 'H' ? 0 : cops[0].len - 1;//if alignment begins from H then 0 else length pf Soft clip
+    BString ras, qas;
+    //cout << "refBS  :'" << BString2String(refBS)   << "'" << endl;
+    //cout << "queryBS:'" << BString2String(queryBS) << "'" << endl;
     generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
-    cerr << "ras : '" << BString2String(ras) << "'\n" << endl;
-    cerr << "qas : '" << BString2String(qas) << "'\n" << endl;
+    //cout << "ras : '" << BString2String(ras) << "'" << endl;
+    //cout << "qas : '" << BString2String(qas) << "'" << endl;
+
+
+
     // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
     
     
@@ -101,8 +94,9 @@ void countKmerFrequencies (
     
     
     
-    // divide # of 
+    // divide # of
 
+    //cerr << ++recordCount << " processed\r" << flush;
   }
   cerr << endl << "Done." << endl;
 }

@@ -65,6 +65,10 @@ TEST_F(MyLibraryTest, LoadMultiFASTA_Test) {
 TEST_F(MyLibraryTest, SplitBy1stSpace_Test) {
   std::string head = splitBy1stSpace("AAA WWW");
   EXPECT_STREQ(head.c_str(), "AAA");
+  EXPECT_EQ(head.size(), 3);
+  head = splitBy1stSpace("i;oarehwv wir efw;ioh");
+  EXPECT_STREQ(head.c_str(), "i;oarehwv");
+  EXPECT_EQ(head.size(), 9);
 }
 
 TEST_F(MyLibraryTest, ParseSAM_Test) {
