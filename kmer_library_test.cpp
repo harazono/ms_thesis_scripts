@@ -131,11 +131,11 @@ TEST_F(MyLibraryTest, GenerateAlignmentFromCIGAR_Test) {
 }
 
 TEST_F(MyLibraryTest,revComp_Test){
-  const string preSeq = "AAAC";
-  const BString pre   = String2BString(preSeq);
-  const BString rev   = revCompBString(pre);
-  const BString ans   = BString2String(rev);
-  EXPECT_STREQ(ans.c_str(), "GTTT");
+  const string preSeq   = "AAAC";
+  const BString preBSeq = String2BString(preSeq);
+  const BString revBSeq = revCompBString(preBSeq);
+  const string ansSeq   = BString2String(revBSeq);
+  EXPECT_STREQ(ansSeq.c_str(), "GTTT");
 
 }
 
