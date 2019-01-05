@@ -58,7 +58,7 @@ void countKmerFrequencies (
     if(record.seq == "*") continue;
     // use only primary alignment and supplementary alignment and reverse compliment of them.
     // sample has many supplimentary alignment.
-    if(record.flag & 2064 != record.flag) continue;
+    if((record.flag & 2064) != record.flag) continue;
 
 
     if(!multiFASTA.count(record.rname.c_str())) {
@@ -76,19 +76,15 @@ void countKmerFrequencies (
     const int refStartPos   = record.pos;
     const int queryStartPos = 0; // generateAlignmentSequencesFromCIGARAndSeqs() will manege first Softclip / Hardclip
     BString ras, qas;
-    //cout << "refBS  :'" << BString2String(refBS)   << "'" << endl;
-    //cout << "queryBS:'" << BString2String(queryBS) << "'" << endl;
     generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
-    cout << "ras : '" << BString2String(ras) << "'" << endl;
-    cout << "qas : '" << BString2String(qas) << "'" << endl;
-    
-    BString &refAlignedBS, &queryAlignedBS;
-    if(record.flag & 16 != record.flag){
+
+    // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
+    if((record.flag & 16) != 16){
       revCompBString(ras);
       revCompBString(qas);
     }
-
-    // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
+    //cout << "refAlignedBS   :'" << BString2String(ras) << "'" << endl;
+    //cout << "queryAlignedBS :'" << BString2String(qas) << "'" << endl;
     
     
     

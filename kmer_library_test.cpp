@@ -140,24 +140,36 @@ TEST_F(MyLibraryTest, GenerateAlignmentFromCIGAR_Test) {
   EXPECT_STREQ(qass.c_str(), "CG-GCAG");
 }
 
-TEST_F(MyLibraryTest,revComp_Test){
+TEST_F(MyLibraryTest,revComp1_Test){
   string  preSeq  = "AAAC";
   BString preBSeq = String2BString(preSeq);
   revCompBString(preBSeq);
-  string  ansSeq  = BString2String(preBSeq);
+  string ansSeq   = BString2String(preBSeq);
   EXPECT_STREQ(ansSeq.c_str(), "GTTT");
+}
 
-  //preSeq   = "A";
-  //preBSeq  = String2BString(preSeq);
-  //revBSeq  = revCompBString(preBSeq);
-  //ansSeq   = BString2String(revBSeq);
-  //EXPECT_STREQ(ansSeq.c_str(), "T");
+TEST_F(MyLibraryTest,revComp2_Test){
+  string  preSeq  = "A";
+  BString preBSeq = String2BString(preSeq);
+  revCompBString(preBSeq);
+  string ansSeq   = BString2String(preBSeq);
+  EXPECT_STREQ(ansSeq.c_str(), "T");
+}
 
-  //preSeq   = "CGTGAAA";
-  //preBSeq  = String2BString(preSeq);
-  //revBSeq  = revCompBString(preBSeq);
-  //ansSeq   = BString2String(revBSeq);
-  //EXPECT_STREQ(ansSeq.c_str(), "TTTCACG");
+TEST_F(MyLibraryTest,revComp3_Test){
+  string  preSeq  = "AAACG";
+  BString preBSeq = String2BString(preSeq);
+  revCompBString(preBSeq);
+  string ansSeq   = BString2String(preBSeq);
+  EXPECT_STREQ(ansSeq.c_str(), "CGTTT");
+}
+
+TEST_F(MyLibraryTest,revComp4_Test){
+  string  preSeq  = "A-ACG";
+  BString preBSeq = String2BString(preSeq);
+  revCompBString(preBSeq);
+  string ansSeq   = BString2String(preBSeq);
+  EXPECT_STREQ(ansSeq.c_str(), "CGT-T");
 }
 
 int main(int argc, char **argv) {

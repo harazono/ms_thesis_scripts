@@ -43,6 +43,7 @@ inline Base char2Base(char inch)
       return GAP_BASE;
     default:
       MYASSERT_NEVERREACH_WD(DUMP(int(inch)));
+      exit(2);
   }
 }
 
@@ -356,21 +357,25 @@ inline Base Base2CompBase(Base inb)
 
     case 3:     //when got 'T'
       return 0; //return   'A'
-    //case '-':
-      //return GAP_BASE;
+    case 4:
+      return GAP_BASE;
     default:
       MYASSERT_NEVERREACH_WD(DUMP(int(inb)));
   }
 }
 
 
-inline void revCompBString(BString b)
+inline void revCompBString(BString &b)
 {
-  size_t stringLength = b.size();
-  for(size_t i = 0; i < stringLength / 2; i++) {
-    std::swap(Base2CompBase(b[i]), Base2CompBase(b[stringLength - 1 - i]));
+  BString tmp;
+  size_t len = b.size();
+  tmp.resize(len);
+  for(size_t idx = 0; idx < len; idx++){
+    tmp[idx] = Base2CompBase(b[len - idx - 1]);
+  }
+  for(size_t idx = 0; idx < len; idx++){
+    b[idx] = tmp[idx];
   }
 }
-
 
 #endif // #ifndef _KMER_LIBRARY_HEADER
