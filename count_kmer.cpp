@@ -75,7 +75,7 @@ struct FrequencyTable {
     size_t var_table_size = tablesize * tablesize;
     fwrite(&var_table_size, sizeof(var_table_size), 1, fle);
     //MYASSERT_WMD("var_table_size == kmer_kmer_table.size()", var_table_size == kmer_kmer_table.size(), DUMP(var_table_size, tablesize, kmer_kmer_table.size()));
-    fwrite(&*kmer_kmer_table.begin(), sizeof(Frequency) * kmer_kmer_table.size(), 1, fle);
+    fwrite(&*score_table.begin(), sizeof(Frequency) * score_table.size(), 1, fle);
     fclose(fle);
   }
   void countAlignment(
@@ -142,7 +142,7 @@ struct FrequencyTable {
 
 
 
-  void scorerize(){
+  void scorerize(const int diff){
     vector<Frequency> kmer_ins_table(tablesize, 0); //<used for normalize gap containing reference line.
     vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0); ///< divided by kmer_table
     auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
@@ -171,17 +171,27 @@ struct FrequencyTable {
     for(int i = 0; i < tablesize; i++){
       for(int j = 0; j < tablesize; j++){
         if(kkp(j, i) != 0){
-          scr(j, i) = static_cast<int>(round(100 * log10(kkp(j, i))));
-          fprintf(stdout, "%d",static_cast<int>(round(100 * log10(kkp(j, i)))));
+          scr(j, i) = diff + static_cast<int>(round(100 * log10(kkp(j, i))));
+          //fprintf(stdout, "%d",static_cast<int>(round(100 * log10(kkp(j, i)))));
         }else{
-          scr(j. i) = -1 * ipow(2, 10);
-          fprintf(stdout, "%d", -1 * ipow(2, 10));
+          scr(j, i) = diff + -1 * ipow(2, 10);
+          //fprintf(stdout, "%d", -1 * ipow(2, 10));
         }
-        fprintf(stdout, ", ");
+        //fprintf(stdout, ", ");
+      }
+      //fprintf(stdout, "\n");
+    }
+  }
+
+  void printscoretable(){
+    for(int i = 0; i < tablesize; i++){
+      for(int j = 0; j < tablesize; j++){
+        fprintf(stdout, "%5d", scr(j, i));
+        if(j != tablesize - 1) fprintf(stdout, ", ");
       }
       fprintf(stdout, "\n");
     }
-    fprintf(stdout, "%d", scr(1,1));
+    fprintf(stdout, "\n");
   }
 
 public:
@@ -261,9 +271,10 @@ public:
     }
     cerr << recordCount << " processed\n";
     cerr << "Done." << endl;
-    scorerize();
+    scorerize(100);
     if(outputInCSV) {
-      printTable();
+      //printTable();
+      printscoretable();
     }
     if(!binaryOutputFileName.empty()) {
       outputAsBinaryTable(binaryOutputFileName);
