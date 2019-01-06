@@ -12,10 +12,11 @@ if ARGV.size < 1
 end
 
 table = CSV.table(ARGV[0], headers:false)
-alt = table.map{|row| row.map{|col| col != 0 ? (log10(col) * 100).round : -1 * 2 ** 10}}
-max = alt.flatten.max
-min = alt.flatten.min
-all = alt.flatten.sort.uniq
+#alt = table.map{|row| row.map{|col| col != 0 ? (log10(col) * 100).round : -1 * 2 ** 10}}
+alt = table.flatten
+max = alt.max
+min = alt.min
+all = 0
 
 print "max = #{max}\nmin = #{min}\nall = #{all}\n"
 

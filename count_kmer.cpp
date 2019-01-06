@@ -158,13 +158,21 @@ struct FrequencyTable {
     // almost all cells are normalized by sum of reference k-mer frequency.
     for(int i = 0; i < tablesize; i++){
       for(int j = 0; j < tablesize; j++){
-        kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(kmer_table[i]);//divide by reference k-mer frequency.
+        if(kmer_table[i] != 0){
+          kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(kmer_table[i]);//divide by reference k-mer frequency.
+        }else{
+          kkp(i, j) = 0;
+        }
       }
     }
     // cells they contains '-' in reference k-mer should be normalized sum of frequency of query k-mer.
     for(int qi = 0; qi < tablesize; qi++){
       for(int ri = 4; ri < tablesize; ri+=5){
-        kkp(ri, qi) = static_cast<double>(kk(ri, qi)) / static_cast<double>(kmer_ins_table[qi]); // divede by query kmer frequency.
+        if(kmer_ins_table[qi] != 0){
+          kkp(ri, qi) = static_cast<double>(kk(ri, qi)) / static_cast<double>(kmer_ins_table[qi]); // divede by query kmer frequency.
+        }else{
+          kkp(ri, qi) = 0;
+        }
       }
     }
 
