@@ -10,19 +10,35 @@
 
 using namespace std;
 
+void error(const char* msg) {
+  fprintf(stderr, "ERROR: %s\n", msg);
+  exit(2);
+}
+
+
 template<uint KMERSIZE>
 struct FrequencyTable {
-  static const size_t tablesize = ipow(5, KMERSIZE);
+  static const size_t tablesize = ipow(4, KMERSIZE);
   typedef int Frequency;
   typedef int Score;
   vector<Frequency> kmer_table; ///< Reference side
 
   void printKTable(){
     for(int i = 0; i < tablesize; i++){
-      fprintf(stdout, "%8d ", kmer_table[i]);
+      fprintf(stdout, "%d\n", kmer_table[i]);
       if(i != tablesize - 1) fprintf(stdout, ", ");
     }
     fprintf(stdout, "\n\n");
+  }
+
+
+  int kmer2index(string str){
+    int retval = 0;
+    int k = str.size();
+    for(int i = 0; i < k; i++){
+    retval = (retval * 5 + char2Base(str[i])) % tablesize;
+    }
+    return retval;
   }
 
 
@@ -30,20 +46,29 @@ struct FrequencyTable {
   FrequencyTable() : kmer_table(tablesize, 0) {}
   void countKmerFrequencies (
       const char* FASTAFileName,
-      uint KmerSize,
+      uint KmerSize
       )
   {
     fprintf(stderr, "Loading from the FASTA file ...\r");
     const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
     fprintf(stderr, "Done                           \n");
 
-    for(int i = 0; i < multiFASTA.size(); i++){
-      string seqname = multiFASTA[i]->first.c_str();
-      fprintf(stdout, "%s\n", seqname);
-      //EXPECT_STREQ(BString2String(mf.begin()->second).c_str(), "CGACTATTCC");
-    }
+    const int kmer_size = KmerSize;
+    for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr) {
+      cerr << "begin to proceeding " << itr->first << "\"" << endl;
+      cerr << "size of " << itr->first << ": " << itr->second.size() << endl;
+
+      int chrlen = itr->second.size();
+      string refseq = BString2String(itr->second).c_str();
+      for(int i = 0; i < chrlen - KmerSize; i++){
+        string kmerstr = refseq.substr(i, kmer_size);
+        int idx = kmer2index(kmerstr);
+        kmer_table[idx] += 1;
+      }
+    }// end of for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr)
+  printKTable();
   }
-}
+};
 
 
 
@@ -78,10 +103,9 @@ int main(int argc, char *argv[]){
   }
   const int NUM_REQUIRED_ARGUMENTS = 1;
   if(optind + NUM_REQUIRED_ARGUMENTS != argc) {
-    printUsageAndExit();
+    fprintf(stderr, "few args\n");
   }
   const char* fasta_file_name = argv[optind + 0];
-  const char* sam_file_name   = argv[optind + 1];
 
   #define FT() ft.countKmerFrequencies(fasta_file_name, kmer_size)
   switch(kmer_size) {
