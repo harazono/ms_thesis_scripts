@@ -135,7 +135,8 @@ struct FrequencyTable {
   
   void printKTable(){
     for(int i = 0; i < tablesize; i++){
-      fprintf(stdout, "%8d, ", kmer_table[i]);
+      fprintf(stdout, "%8d ", kmer_table[i]);
+      if(i != tablesize - 1) fprintf(stdout, ", ");
     }
     fprintf(stdout, "\n\n");
   }
@@ -281,8 +282,8 @@ public:
     cerr << "Done." << endl;
     scorerize(100);
     if(outputInCSV) {
-      //printTable();
-      printscoretable();
+      printKTable();
+      //printscoretable();
     }
     if(!binaryOutputFileName.empty()) {
       outputAsBinaryTable(binaryOutputFileName);
