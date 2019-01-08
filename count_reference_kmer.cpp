@@ -26,9 +26,8 @@ struct FrequencyTable {
   void printKTable(){
     for(int i = 0; i < tablesize; i++){
       fprintf(stdout, "%d\n", kmer_table[i]);
-      if(i != tablesize - 1) fprintf(stdout, ", ");
     }
-    fprintf(stdout, "\n\n");
+    fprintf(stdout, "\n");
   }
 
 
@@ -36,7 +35,7 @@ struct FrequencyTable {
     int retval = 0;
     int k = str.size();
     for(int i = 0; i < k; i++){
-    retval = (retval * 5 + char2Base(str[i])) % tablesize;
+    retval = (retval * 4 + char2Base(str[i])) % tablesize;
     }
     return retval;
   }
@@ -52,12 +51,11 @@ struct FrequencyTable {
     fprintf(stderr, "Loading from the FASTA file ...\r");
     const MultiFASTA multiFASTA = loadFromFASTA(FASTAFileName);
     fprintf(stderr, "Done                           \n");
+    fprintf(stderr, "k = %d\n", KmerSize);
 
     const int kmer_size = KmerSize;
     for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr) {
-      cerr << "begin to proceeding " << itr->first << "\"" << endl;
-      cerr << "size of " << itr->first << ": " << itr->second.size() << endl;
-
+      cerr << "begin  to proceed \"" << itr->first << "\"" << "\r";
       int chrlen = itr->second.size();
       string refseq = BString2String(itr->second).c_str();
       for(int i = 0; i < chrlen - KmerSize; i++){
@@ -65,6 +63,7 @@ struct FrequencyTable {
         int idx = kmer2index(kmerstr);
         kmer_table[idx] += 1;
       }
+      cerr << "finish proceeding \"" << itr->first << "\"" << endl;
     }// end of for(auto itr = multiFASTA.begin(); itr != multiFASTA.end(); ++itr)
   printKTable();
   }
