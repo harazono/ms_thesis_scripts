@@ -132,6 +132,16 @@ struct FrequencyTable {
     fprintf(stdout, "\n");
   }
 
+  void printKKPTable(){
+    for(int i = 0; i < tablesize; i++){
+      for(int j = 0; j < tablesize; j++){
+        fprintf(stdout, "%8lf", kkp(j, i));
+        if(j != tablesize - 1) fprintf(stdout, ", ");
+      }
+      fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "\n");
+  }
   
   void printKTable(){
     for(int i = 0; i < tablesize; i++){
@@ -159,20 +169,29 @@ struct FrequencyTable {
     // almost all cells are normalized by sum of reference k-mer frequency.
     for(int i = 0; i < tablesize; i++){
       for(int j = 0; j < tablesize; j++){
+
+        bool flag = true;
+        int ref_idx = i;
+        for(int a = 1; a <= KMERSIZE; a++){
+          if(ref_idx % 5 == 4){
+            flag = false;
+            break;
+          }else{
+            ref_idx /= 5;
+          }
+        }
+        double denomi;
+        if(flag){
+          denomi = static_cast<double>(kmer_table[i]);
+          //fprintf(stderr, "index = %d, flag = true\n", i);
+        }else{
+          denomi = static_cast<double>(kmer_ins_table[j]);
+          //fprintf(stderr, "index = %d, flag = false\n", i);
+        }
         if(kmer_table[i] != 0){
-          kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(kmer_table[i]);//divide by reference k-mer frequency.
+          kkp(i, j) = static_cast<double>(kk(i, j)) / denomi;//divide by reference k-mer frequency.
         }else{
           kkp(i, j) = 0;
-        }
-      }
-    }
-    // cells they contains '-' in reference k-mer should be normalized sum of frequency of query k-mer.
-    for(int qi = 0; qi < tablesize; qi++){
-      for(int ri = 4; ri < tablesize; ri+=5){
-        if(kmer_ins_table[qi] != 0){
-          kkp(ri, qi) = static_cast<double>(kk(ri, qi)) / static_cast<double>(kmer_ins_table[qi]); // divede by query kmer frequency.
-        }else{
-          kkp(ri, qi) = 0;
         }
       }
     }
@@ -184,11 +203,8 @@ struct FrequencyTable {
           //fprintf(stdout, "%d",static_cast<int>(round(100 * log10(kkp(j, i)))));
         }else{
           scr(j, i) = diff + -1 * ipow(2, 10);
-          //fprintf(stdout, "%d", -1 * ipow(2, 10));
         }
-        //fprintf(stdout, ", ");
       }
-      //fprintf(stdout, "\n");
     }
   }
 
@@ -204,7 +220,7 @@ struct FrequencyTable {
   }
 
 public:
-  FrequencyTable() : kmer_table(tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0), score_table(tablesize * tablesize, 0) {}
+  FrequencyTable() : kmer_table(tablesize, 0), kmer_kmer_prob_table(tablesize * tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0), score_table(tablesize * tablesize, 0) {}
   void countKmerFrequencies (
     const char* FASTAFileName,
     const char* SAMFileName,
@@ -282,8 +298,8 @@ public:
     cerr << "Done." << endl;
     scorerize(100);
     if(outputInCSV) {
-      printKTable();
-      //printscoretable();
+      //printKKPTable();
+      printscoretable();
     }
     if(!binaryOutputFileName.empty()) {
       outputAsBinaryTable(binaryOutputFileName);
