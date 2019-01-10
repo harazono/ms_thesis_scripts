@@ -167,11 +167,14 @@ struct FrequencyTable {
       }
     }
     // almost all cells are normalized by sum of reference k-mer frequency.
+    int denomi;
+    bool flag;
+    int ref_idx;
     for(int i = 0; i < tablesize; i++){
       for(int j = 0; j < tablesize; j++){
 
-        bool flag = true;
-        int ref_idx = i;
+        flag = true;
+        ref_idx = i;
         for(int a = 1; a <= KMERSIZE; a++){
           if(ref_idx % 5 == 4){
             flag = false;
@@ -180,16 +183,13 @@ struct FrequencyTable {
             ref_idx /= 5;
           }
         }
-        double denomi;
         if(flag){
-          denomi = static_cast<double>(kmer_table[i]);
-          //fprintf(stderr, "index = %d, flag = true\n", i);
+          denomi = kmer_table[i];
         }else{
-          denomi = static_cast<double>(kmer_ins_table[j]);
-          //fprintf(stderr, "index = %d, flag = false\n", i);
+          denomi = kmer_ins_table[j];
         }
-        if(kmer_table[i] != 0){
-          kkp(i, j) = static_cast<double>(kk(i, j)) / denomi;//divide by reference k-mer frequency.
+        if(denomi != 0){
+          kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(denomi);//divide by reference k-mer frequency.
         }else{
           kkp(i, j) = 0;
         }
