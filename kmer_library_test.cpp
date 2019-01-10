@@ -228,3 +228,4 @@ TEST_F(MyLibraryTest,localNormalization_Test2){
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
 }
+
