@@ -385,29 +385,50 @@ inline void revCompBString(BString &b)
 
 inline double* lacalNormalization(const int* mtx)
 {
+
 #define ind(i, j) ( (j * 5 + i) )
   double *retval = (double*)malloc(sizeof(double) * 25);
-  int sum_all    = 0;
+  uint32_t sum_all    = 0;
+  for(int i = 0; i < 25; i++){
+    retval[i] = 0;
+  }
   for(int i = 0; i < 25; i++){
     sum_all += mtx[i];
   }
-  int sum_ins = 0;
+
+  if(sum_all == 0){ // need to be well concidered.
+    for(int i = 0; i < 24; i++){ retval[i] = 1.0 / 24;}
+    return retval;
+  }
+  uint32_t sum_ins = 0;
   for(int j = 0; j < 4; j++){
     sum_ins += mtx[ind(4, j)];
   }
   for(int j = 0; j < 4; j++){
     retval[ind(4, j)] = (double)mtx[ind(4, j)] / sum_all;
   }
-  const double not_ins_ratio = (double)(sum_all - sum_ins) /(4 * (double)sum_all);
-  
+
+
+  if(sum_all == sum_ins){//in case that only insertion line had values.
+    for(int j = 0; j < 4; j++){
+      retval[ind(4, j)] = mtx[ind(4, j)] / sum_ins;
+    }
+    return retval;
+  }
+
+  double not_ins_ratio = (double)(sum_all - sum_ins) / (sum_all * 4);
+
   for(int i = 0; i < 4; i++){
-    int sum_line = 0;
-    for(int j = 0; j  < 5; j++){
+    uint32_t sum_line = 0;
+    for(int j = 0; j < 5; j++){
       sum_line += mtx[ind(i, j)];
     }
-
     for(int j = 0; j < 5; j++){
-      retval[ind(i, j)] = (double)mtx[ind(i, j)] * not_ins_ratio / sum_line;
+      if(sum_line != 0){
+        retval[ind(i, j)] = (double)mtx[ind(i, j)] * not_ins_ratio / sum_line;
+      }else{
+        retval[ind(i, j)] = 0;
+      }
     }
   }
 

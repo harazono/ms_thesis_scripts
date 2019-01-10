@@ -223,6 +223,52 @@ TEST_F(MyLibraryTest,localNormalization_Test2){
   ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
 }
 
+TEST_F(MyLibraryTest,localNormalization_Test3){
+  //int *localTable = (int*)malloc(sizeof(int) * 25);
+  int localTable[] = {0, 11, 9, 2, 0, 0, 12, 31, 0, 0, 31, 45, 111, 0, 0, 65, 12, 32, 0, 0, 11, 11, 11, 11, 0};
+  double *localprob = (double*)malloc(sizeof(double) * 25);
+  localprob = lacalNormalization(localTable);
+  double sum = 0;
+  for(int i = 0; i < 25; i++){
+    sum += localprob[i];
+  }
+  ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
+}
+
+TEST_F(MyLibraryTest,localNormalization_Test4){
+  //int *localTable = (int*)malloc(sizeof(int) * 25);
+  int localTable[] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+  double *localprob = (double*)malloc(sizeof(double) * 25);
+  localprob = lacalNormalization(localTable);
+  double sum = 0;
+  for(int i = 0; i < 25; i++){
+    sum += localprob[i];
+  }
+  ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
+}
+
+TEST_F(MyLibraryTest,localNormalization_Test5){
+  //int *localTable = (int*)malloc(sizeof(int) * 25);
+  int localTable[] = {1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 0};
+  double *localprob = (double*)malloc(sizeof(double) * 25);
+  localprob = lacalNormalization(localTable);
+  double sum = 0;
+  for(int i = 0; i < 25; i++){
+    sum += localprob[i];
+  }
+  ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
+}
+TEST_F(MyLibraryTest,localNormalization_Test6){
+  //int *localTable = (int*)malloc(sizeof(int) * 25);
+  int localTable[] = {125243265, 831388, 1594635, 990496, 2042198, 1311240, 127379226, 968296, 6075575, 2546654, 1830296, 601625, 128516423, 1074008, 3062296, 1009615, 5800435, 1248973, 117309637, 2979892, 8888301, 8244568, 10193576, 12716559, 0};
+  double *localprob = (double*)malloc(sizeof(double) * 25);
+  localprob = lacalNormalization(localTable);
+  double sum = 0;
+  for(int i = 0; i < 25; i++){
+    sum += localprob[i];
+  }
+  ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
+}
   int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);

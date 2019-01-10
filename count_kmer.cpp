@@ -100,12 +100,14 @@ struct FrequencyTable {
       // count smaller case
       rti = rki;
       qti = qki;
-      for(int cnt = 0; cnt < KMERSIZE - 1; cnt++){
+      // ato de kangaeru
+     /* for(int cnt = 0; cnt < KMERSIZE - 1; cnt++){
         rti.unshift(4);
         qti.unshift(4);
         kmer_table[rti]++;
         kk(rti, qti)++;
       }
+      */
     }
   }
 
@@ -256,6 +258,8 @@ struct FrequencyTable {
         for(int lri = 0; lri < 5; lri++){// local reference index
           for(int lqi = 0; lqi < 5; lqi++){// local query index
             kkp(gri * 5 + lri, gqi * 5 + lqi) = localprob[ind(lri, lqi)];
+            //fprintf(stdout, "kkp(gri * 5 + lri, gqi * 5 + lqi) = %lf\n", kkp(gri * 5 + lri, gqi * 5 + lqi));
+            MYASSERT_WMD("prob must be in [0, 1]", kkp(gri * 5 + lri, gqi * 5 + lqi) <= 1.0 && kkp(gri * 5 + lri, gqi * 5 + lqi) >= 0.0, DUMP(kkp(gri * 5 + lri, gqi * 5 + lqi)));
           }
         }
       }
@@ -350,14 +354,15 @@ public:
     }
     cerr << recordCount << " processed\n";
     cerr << "Done." << endl;
+    //printKKTable();
     scorerize(100);
+    if(!binaryOutputFileName.empty()) {
+      outputAsBinaryTable(binaryOutputFileName);
+    }
     if(outputInCSV) {
       //printKKPTable();
       //printKKTable();
       printscoretable();
-    }
-    if(!binaryOutputFileName.empty()) {
-      outputAsBinaryTable(binaryOutputFileName);
     }
   }
 
