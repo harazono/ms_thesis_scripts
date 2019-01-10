@@ -98,6 +98,8 @@ struct FrequencyTable {
       kk(rki, qki)++;
     }
   }
+
+
   void printTable(){
     vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0); ///< divided by kmer_table
     auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
@@ -151,8 +153,18 @@ struct FrequencyTable {
     fprintf(stdout, "\n\n");
   }
 
+  void printscoretable(){
+    for(int i = 0; i < tablesize; i++){
+      for(int j = 0; j < tablesize; j++){
+        fprintf(stdout, "%5d", scr(j, i));
+        if(j != tablesize - 1) fprintf(stdout, ", ");
+      }
+      fprintf(stdout, "\n");
+    }
+    fprintf(stdout, "\n");
+  }
 
-
+/*
   void scorerize(const int diff){
     vector<Frequency> kmer_ins_table(tablesize, 0); //<used for normalize gap containing reference line.
     vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0); ///< divided by kmer_table
@@ -207,17 +219,62 @@ struct FrequencyTable {
       }
     }
   }
+*/
 
-  void printscoretable(){
+  void scorerize(const int diff){
+    vector<Frequency> kmer_ins_table(tablesize, 0); //<used for normalize gap containing reference line.
+    vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0); ///< divided by kmer_table
+    auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
+      MYASSERT_WMD("Out of range (r)", r < tablesize, DUMP(r));
+      MYASSERT_WMD("Out of range (q)", q < tablesize, DUMP(q));
+      return kmer_kmer_prob_table[r * tablesize + q];
+    };
+
+
+    size_t elementsize = tablesize / 5;
+    fprintf(stdout, "elementsize = %d\n", elementsize);
+    for(int gri = 0; gri < elementsize; gri++){// global reference index
+      for(int gqi = 0; gqi < elementsize; gqi++){// global query index
+        fprintf(stdout, "enter (%d, %d)\n", gri, gqi);
+        #define ind(i, j) ( (j * 5 + i) )
+        int* elm = (int*)malloc(sizeof(int) * 25);
+        for(int lri = 0; lri < 5; lri++){// local reference index
+          for(int lqi = 0; lqi < 5; lqi++){// local query index
+            elm[ind(lri, lqi)] = kk(gri * 5 + lri, gqi * 5 + lqi);
+            fprintf(stdout, "elm[ind(%d, %d)] = kk(%d, %d)\n", lri, lqi, gri * 5 + lri, gqi * 5 + lqi);
+          }
+        }
+
+        double *localprob = (double*)malloc(sizeof(double) * 25);
+        localprob = lacalNormalization(elm);
+        for(int i = 0; i < 25; i++){
+          printf("%lf, ", localprob[i]);
+          if(i % 5 == 4) printf("\n");
+        }
+        for(int lri = 0; lri < 5; lri++){// local reference index
+          for(int lqi = 0; lqi < 5; lqi++){// local query index
+            kkp(gri * 5 + lri, gqi * 5 + lqi) = localprob[ind(lri, lqi)];
+            printf("kkp(%d, %d) = localprob[ind(%d, %d)]\n", gri * 5 + lri, gqi * 5 + lqi, lri, lqi);
+
+          }
+        }
+      }
+    }
+
     for(int i = 0; i < tablesize; i++){
       for(int j = 0; j < tablesize; j++){
-        fprintf(stdout, "%5d", scr(j, i));
-        if(j != tablesize - 1) fprintf(stdout, ", ");
+        if(kkp(j, i) != 0){
+          scr(j, i) = diff + static_cast<int>(round(100 * log10(kkp(j, i))));
+        }else{
+          scr(j, i) = diff + -1 * ipow(2, 10);
+        }
       }
-      fprintf(stdout, "\n");
     }
-    fprintf(stdout, "\n");
   }
+
+
+
+
 
 public:
   FrequencyTable() : kmer_table(tablesize, 0), kmer_kmer_prob_table(tablesize * tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0), score_table(tablesize * tablesize, 0) {}
@@ -285,10 +342,7 @@ public:
         revCompBString(ras);
         revCompBString(qas);
       }
-      // count up # of kmer-kmer occurence.
       countAlignment(ras, qas);
-      // divide # of
-
       ++recordCount;
       if(recordCount % 100 == 0) {
         cerr << recordCount << " processed\r" << flush;
@@ -298,8 +352,8 @@ public:
     cerr << "Done." << endl;
     scorerize(100);
     if(outputInCSV) {
-      //printKKPTable();
-      printscoretable();
+      printKKPTable();
+      //printscoretable();
     }
     if(!binaryOutputFileName.empty()) {
       outputAsBinaryTable(binaryOutputFileName);

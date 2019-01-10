@@ -144,6 +144,9 @@ public:
   inline void ShiftIn(Base b) {
     kint = (kint * NUM_CHARS_FOR_BASES + b) % KMERINT_COUNT;
   }
+  inline void unshift(Base b) {
+    kint = kint / NUM_CHARS_FOR_BASES + b * KMERINT_COUNT / 5;
+  }
 
   inline KInt() : kint(0) {}
   inline KInt(uint64_t v) : kint(v) {}
@@ -377,5 +380,41 @@ inline void revCompBString(BString &b)
     b[idx] = tmp[idx];
   }
 }
+
+
+
+inline double* lacalNormalization(const int* mtx)
+{
+#define ind(i, j) ( (j * 5 + i) )
+  double *retval = (double*)malloc(sizeof(double) * 25);
+  int sum_all    = 0;
+  for(int i = 0; i < 25; i++){
+    sum_all += mtx[i];
+  }
+  int sum_ins = 0;
+  for(int j = 0; j < 4; j++){
+    sum_ins += mtx[ind(4, j)];
+  }
+  for(int j = 0; j < 4; j++){
+    retval[ind(4, j)] = (double)mtx[ind(4, j)] / sum_all;
+  }
+  const double not_ins_ratio = (double)(sum_all - sum_ins) /(4 * (double)sum_all);
+  
+  for(int i = 0; i < 4; i++){
+    int sum_line = 0;
+    for(int j = 0; j  < 5; j++){
+      sum_line += mtx[ind(i, j)];
+    }
+
+    for(int j = 0; j < 5; j++){
+      retval[ind(i, j)] = (double)mtx[ind(i, j)] * not_ins_ratio / sum_line;
+    }
+  }
+
+#undef index_25_mtx
+  retval[24] = 0;
+  return retval;
+}
+
 
 #endif // #ifndef _KMER_LIBRARY_HEADER

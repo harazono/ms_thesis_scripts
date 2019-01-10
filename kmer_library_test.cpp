@@ -54,6 +54,28 @@ TEST_F(MyLibraryTest, KInt_Simple3_Test) {
   EXPECT_EQ(k6, 102);
 }
 
+TEST_F(MyLibraryTest, KInt_Simple4_Test) {
+  int gap = 4;
+  KInt<3> k4("GGC");
+  KInt<3> k5("GC-");
+  KInt<3> k6("C--");
+  k4.ShiftIn(gap);
+  EXPECT_EQ(k4, k5);
+}
+
+TEST_F(MyLibraryTest, KInt_unshift_Test) {
+  int gap = 4;
+  KInt<3> k4("GGC");
+  KInt<3> k5("-GG");
+  KInt<3> k6("--G");
+  KInt<3> k7("---");
+  k4.unshift(gap);
+  EXPECT_EQ(k4, k5);
+  k4.unshift(gap);
+  EXPECT_EQ(k4, k6);
+  k4.unshift(gap);
+  EXPECT_EQ(k4, k7);
+}
 TEST_F(MyLibraryTest, LoadMultiFASTA_Test) {
   MultiFASTA mf = loadFromFASTA("10.ref");
   EXPECT_EQ(mf.size(), 1);
@@ -172,7 +194,36 @@ TEST_F(MyLibraryTest,revComp4_Test){
   EXPECT_STREQ(ansSeq.c_str(), "CGT-T");
 }
 
-int main(int argc, char **argv) {
+
+TEST_F(MyLibraryTest,localNormalization_Test1){
+  int *localTable = (int*)malloc(sizeof(int) * 25);
+  for(int i = 0; i < 25; i++){
+    localTable[i] = 10000;
+  }
+  localTable[24] = 0;
+  double *localprob = (double*)malloc(sizeof(double) * 25);
+  localprob = lacalNormalization(localTable);
+  double sum = 0;
+  for(int i = 0; i < 25; i++){
+    sum += localprob[i];
+  }
+  ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
+}
+
+
+TEST_F(MyLibraryTest,localNormalization_Test2){
+  //int *localTable = (int*)malloc(sizeof(int) * 25);
+  int localTable[] = {7671605, 1878030, 409216, 1946895, 8931149, 7685734, 6046752, 4981902, 5911312, 6719582, 1143531, 6398762, 225281, 53472, 4588717, 2709910, 3803638, 6196264, 4410145, 6005817, 7383021, 7429599, 1907415, 4834045, 0};
+  double *localprob = (double*)malloc(sizeof(double) * 25);
+  localprob = lacalNormalization(localTable);
+  double sum = 0;
+  for(int i = 0; i < 25; i++){
+    sum += localprob[i];
+  }
+  ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
+}
+
+  int main(int argc, char **argv) {
   GDB_On_SEGV g(argv[0]);
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
