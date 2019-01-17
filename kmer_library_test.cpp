@@ -54,7 +54,7 @@ TEST_F(MyLibraryTest, KInt_Simple3_Test) {
   EXPECT_EQ(k6, 102);
 }
 
-TEST_F(MyLibraryTest, KInt_Simple4_Test) {
+TEST_F(MyLibraryTest, KInt_ShiftIn_Test) {
   int gap = 4;
   KInt<3> k4("GGC");
   KInt<3> k5("GC-");
@@ -75,6 +75,24 @@ TEST_F(MyLibraryTest, KInt_unshift_Test) {
   EXPECT_EQ(k4, k6);
   k4.unshift(gap);
   EXPECT_EQ(k4, k7);
+}
+
+TEST_F(MyLibraryTest, KInt_hasgap_Test) {
+  int gap = 4;
+  KInt<3> k4("GGG");
+  KInt<3> k5("-GG");
+  KInt<3> k6("--G");
+  KInt<3> k7("---");
+  KInt<3> k8("G--");
+  KInt<3> k9("GG-");
+  EXPECT_EQ(k4.hasgap(), false);
+  EXPECT_EQ(k5.hasgap(), true);
+  EXPECT_EQ(k6.hasgap(), true);
+  EXPECT_EQ(k7.hasgap(), true);
+  EXPECT_EQ(k8.hasgap(), true);
+  EXPECT_EQ(k9.hasgap(), true);
+
+
 }
 TEST_F(MyLibraryTest, LoadMultiFASTA_Test) {
   MultiFASTA mf = loadFromFASTA("10.ref");

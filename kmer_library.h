@@ -147,7 +147,19 @@ public:
   inline void unshift(Base b) {
     kint = kint / NUM_CHARS_FOR_BASES + b * KMERINT_COUNT / 5;
   }
-
+  inline bool hasgap() {
+    bool flag = false;
+    uint64_t tmp = kint;
+    for(int a = 1; a <= KMERINT_COUNT; a++){
+      if(tmp % 5 == 4){
+        flag = true;
+        return flag;
+      }else{
+        tmp /= 5;
+      }
+    }
+    return flag;
+  }
   inline KInt() : kint(0) {}
   inline KInt(uint64_t v) : kint(v) {}
   /// Construct by string
@@ -388,7 +400,7 @@ inline double* lacalNormalization(const int* mtx)
 
 #define ind(i, j) ( (j * 5 + i) )
   double *retval = (double*)malloc(sizeof(double) * 25);
-  uint32_t sum_all    = 0;
+  uint64_t sum_all    = 0;
   for(int i = 0; i < 25; i++){
     retval[i] = 0;
   }
@@ -400,7 +412,7 @@ inline double* lacalNormalization(const int* mtx)
     for(int i = 0; i < 24; i++){ retval[i] = 1.0 / 24;}
     return retval;
   }
-  uint32_t sum_ins = 0;
+  uint64_t sum_ins = 0;
   for(int j = 0; j < 4; j++){
     sum_ins += mtx[ind(4, j)];
   }
@@ -419,7 +431,7 @@ inline double* lacalNormalization(const int* mtx)
   double not_ins_ratio = (double)(sum_all - sum_ins) / (sum_all * 4);
 
   for(int i = 0; i < 4; i++){
-    uint32_t sum_line = 0;
+    uint64_t sum_line = 0;
     for(int j = 0; j < 5; j++){
       sum_line += mtx[ind(i, j)];
     }

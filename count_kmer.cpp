@@ -5,10 +5,12 @@
 #include <map>
 #include <getopt.h>
 #include <math.h>
+#include <omp.h>
 #include "kmer_library.h"
 #include "cpas_debug.h"
 
 using namespace std;
+
 
 void error(const char* msg) {
   fprintf(stderr, "ERROR: %s\n", msg);
@@ -176,63 +178,7 @@ struct FrequencyTable {
     fprintf(stdout, "\n");
   }
 
-/*
-  void scorerize(const int diff){
-    vector<Frequency> kmer_ins_table(tablesize, 0); //<used for normalize gap containing reference line.
-    vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0); ///< divided by kmer_table
-    auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
-      MYASSERT_WMD("Out of range (r)", r < tablesize, DUMP(r));
-      MYASSERT_WMD("Out of range (q)", q < tablesize, DUMP(q));
-      return kmer_kmer_prob_table[r * tablesize + q];
-    };
-    for(int qi = 0; qi < tablesize; qi++){
-      for(int ri = 0; ri < tablesize; ri++){
-        kmer_ins_table[qi] += kk(ri, qi);
-      }
-    }
-    // almost all cells are normalized by sum of reference k-mer frequency.
-    int denomi;
-    bool flag;
-    int ref_idx;
-    for(int i = 0; i < tablesize; i++){
-      for(int j = 0; j < tablesize; j++){
-
-        flag = true;
-        ref_idx = i;
-        for(int a = 1; a <= KMERSIZE; a++){
-          if(ref_idx % 5 == 4){
-            flag = false;
-            break;
-          }else{
-            ref_idx /= 5;
-          }
-        }
-        if(flag){
-          denomi = kmer_table[i];
-        }else{
-          denomi = kmer_ins_table[j];
-        }
-        if(denomi != 0){
-          kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(denomi);//divide by reference k-mer frequency.
-        }else{
-          kkp(i, j) = 0;
-        }
-      }
-    }
-
-    for(int i = 0; i < tablesize; i++){
-      for(int j = 0; j < tablesize; j++){
-        if(kkp(j, i) != 0){
-          scr(j, i) = diff + static_cast<int>(round(100 * log10(kkp(j, i))));
-          //fprintf(stdout, "%d",static_cast<int>(round(100 * log10(kkp(j, i)))));
-        }else{
-          scr(j, i) = diff + -1 * ipow(2, 10);
-        }
-      }
-    }
-  }
-*/
-
+  size_t score_count = 1;
   void scorerize(const int diff){
     vector<Frequency> kmer_ins_table(tablesize, 0); //<used for normalize gap containing reference line.
     vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0);
@@ -242,38 +188,83 @@ struct FrequencyTable {
       return kmer_kmer_prob_table[r * tablesize + q];
     };
 
-    size_t elementsize = tablesize / 5;
-    for(int gri = 0; gri < elementsize; gri++){// global reference index
-      for(int gqi = 0; gqi < elementsize; gqi++){// global query index
-        #define ind(i, j) ( (j * 5 + i) )
-        int* elm = (int*)malloc(sizeof(int) * 25);
-        for(int lri = 0; lri < 5; lri++){// local reference index
-          for(int lqi = 0; lqi < 5; lqi++){// local query index
-            elm[ind(lri, lqi)] = kk(gri * 5 + lri, gqi * 5 + lqi);
+    // almost all cells are normalized by sum of reference k-mer frequency.
+    int denomi;
+    bool flag;
+    KInt<KMERSIZE> ref_idx;
+    #pragma omp parallel num_threads(16)
+    {
+      #pragma omp for
+      for(int i = 0; i < tablesize; i++){
+        for(int j = 0; j < tablesize; j++){
+          if(score_count % 10000 == 0) fprintf(stderr, "first roop : %'d / %'d\r", score_count, tablesize * tablesize);
+          #pragma omp atomic
+          score_count++;
+          flag    = true;
+          ref_idx = i;
+          flag    = ref_idx.hasgap();
+          //if(flag == false){
+          if(ref_idx % 5 != 4){
+            denomi = kmer_table[i];
+          }else{
+            denomi = kmer_ins_table[j];
           }
-        }
-
-        double *localprob = (double*)malloc(sizeof(double) * 25);
-        localprob = lacalNormalization(elm);
-        for(int lri = 0; lri < 5; lri++){// local reference index
-          for(int lqi = 0; lqi < 5; lqi++){// local query index
-            kkp(gri * 5 + lri, gqi * 5 + lqi) = localprob[ind(lri, lqi)];
-            //fprintf(stdout, "kkp(gri * 5 + lri, gqi * 5 + lqi) = %lf\n", kkp(gri * 5 + lri, gqi * 5 + lqi));
-            MYASSERT_WMD("prob must be in [0, 1]", kkp(gri * 5 + lri, gqi * 5 + lqi) <= 1.0 && kkp(gri * 5 + lri, gqi * 5 + lqi) >= 0.0, DUMP(kkp(gri * 5 + lri, gqi * 5 + lqi)));
+          if(denomi != 0){
+            kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(denomi);//divide by reference k-mer frequency.
+            MYASSERT_WMD("prob must be in [0, 1]", kkp(i, j) <= 1.0 && kkp(i, j) >= 1.0, DUMP(kkp(i, j)));
+          }else{
+            kkp(i, j) = 0;
           }
         }
       }
-    }
+      fprintf(stderr, "first roop : %'d / %'d                         \r", score_count, tablesize * tablesize);
+      #define ind(i, j) ( (j * 5 + i) )
+      score_count = 0;
+      
+      size_t elementsize = tablesize / 5;
+#pragma omp for
+      for(int gri = 0; gri < elementsize; gri++){// global reference index
+        for(int gqi = 0; gqi < elementsize; gqi++){// global query index
+          if(score_count % 10000 == 0) fprintf(stderr, "second roop : %'d / %'d                       \r", score_count, elementsize * elementsize) ;
+          #pragma omp atomic
+          score_count++;
+          int* elm = (int*)malloc(sizeof(int) * 25);
+          for(int lri = 0; lri < 5; lri++){// local reference index
+            for(int lqi = 0; lqi < 5; lqi++){// local query index
+              elm[ind(lri, lqi)] = kk(gri * 5 + lri, gqi * 5 + lqi);
+            }
+          }
+          double *localprob = (double*)malloc(sizeof(double) * 25);
+          localprob = lacalNormalization(elm);
+          for(int lri = 0; lri < 5; lri++){// local reference index
+            for(int lqi = 0; lqi < 5; lqi++){// local query index
+              //KInt<KMERSIZE> kkp_refindex = gri * 5 + lri;
+              //if(kkp_refindex.hasgap() == true){
+              if(lri == 4){
+                kkp(gri * 5 + lri, gqi * 5 + lqi) = localprob[ind(lri, lqi)];
+              //fprintf(stdout, "kkp(gri * 5 + lri, gqi * 5 + lqi) = %lf\n", kkp(gri * 5 + lri, gqi * 5 + lqi));
+                MYASSERT_WMD("prob must be in [0, 1]", kkp(gri * 5 + lri, gqi * 5 + lqi) <= 1.0 && kkp(gri * 5 + lri, gqi * 5 + lqi) >= 0.0, DUMP(kkp(gri * 5 + lri, gqi * 5 + lqi)));
+              }
+            }
+          }
+        }
+      }
 
+    }
+    score_count = 0;
     for(int i = 0; i < tablesize; i++){
       for(int j = 0; j < tablesize; j++){
-        if(kkp(j, i) != 0){
+        if(score_count % 10000 == 0) fprintf(stderr, "third  roop : %'d / %'d                                               \r", score_count, tablesize * tablesize) ;
+        #pragma omp atomic
+        score_count++;
+        if(kkp(j, i) > 0.0){
           scr(j, i) = diff + static_cast<int>(round(100 * log10(kkp(j, i))));
         }else{
           scr(j, i) = diff + -1 * ipow(2, 10);
         }
       }
     }
+    fprintf(stderr, "Done\r");
   }
 
 
@@ -290,7 +281,7 @@ public:
     const string binaryOutputFileName ///< empty() if --binary is not given
   )
   {
-    fprintf(stderr, "===Parameters===\n");
+    fprintf(stderr, "\n===Parameters===\n");
     fprintf(stderr, "Reference FASTA: %s\n", FASTAFileName);
     fprintf(stderr, "Input SAM file : %s\n", SAMFileName);
     fprintf(stderr, "K-mer size     : %d\n", KmerSize);
