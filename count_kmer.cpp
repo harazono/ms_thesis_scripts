@@ -265,7 +265,7 @@ struct FrequencyTable {
         }
       }
     }
-    fprintf(stderr, "Done\r");
+    fprintf(stderr, "Done                                                                             \r");
   }
 
 

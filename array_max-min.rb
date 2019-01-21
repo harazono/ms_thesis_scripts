@@ -16,7 +16,5 @@ table = CSV.table(ARGV[0], headers:false)
 alt = table.flatten
 max = alt.max
 min = alt.min
-all = 0
 
-print "max = #{max}\nmin = #{min}\nall = #{all}\n"
-
+print "max = #{max}\nmin = #{min}\n"
