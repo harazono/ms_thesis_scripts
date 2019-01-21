@@ -32,6 +32,7 @@ struct FrequencyTable {
   typedef int Score;
   vector<Frequency> kmer_table; ///< Reference side
   vector<Frequency> kmer_kmer_table; ///< The first dimension is reference, the second is query.
+  vector<Frequency> kmer_ins_table; //<used for normalize gap containing reference line.
   vector<double>    kmer_kmer_prob_table;
   vector<Score>     score_table;
   //vector<Score>     score_table(tablesize * tablesize, 0); ///< divided by kmer_table
@@ -98,6 +99,7 @@ struct FrequencyTable {
       rki.ShiftIn(ras[i]);
       qki.ShiftIn(qas[i]);
       kmer_table[rki]++;
+      kmer_ins_table[qki]++;
       kk(rki, qki)++;
       // count smaller case
       rti = rki;
@@ -180,7 +182,6 @@ struct FrequencyTable {
 
   size_t score_count = 1;
   void scorerize(const int diff){
-    vector<Frequency> kmer_ins_table(tablesize, 0); //<used for normalize gap containing reference line.
     vector<double>    kmer_kmer_prob_table(tablesize * tablesize, 0);
     auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
       MYASSERT_WMD("Out of range (r)", r < tablesize, DUMP(r));
@@ -203,8 +204,8 @@ struct FrequencyTable {
           flag    = true;
           ref_idx = i;
           flag    = ref_idx.hasgap();
-          //if(flag == false){
-          if(ref_idx % 5 != 4){
+          if(flag == false){
+          //if(ref_idx % 5 != 4){
             denomi = kmer_table[i];
           }else{
             denomi = kmer_ins_table[j];
@@ -220,7 +221,7 @@ struct FrequencyTable {
       fprintf(stderr, "first roop : %'d / %'d                         \r", score_count, tablesize * tablesize);
       #define ind(i, j) ( (j * 5 + i) )
       score_count = 0;
-      
+      /*
       size_t elementsize = tablesize / 5;
 #pragma omp for
       for(int gri = 0; gri < elementsize; gri++){// global reference index
@@ -248,7 +249,7 @@ struct FrequencyTable {
             }
           }
         }
-      }
+      }*/
 
     }
     score_count = 0;
@@ -272,7 +273,7 @@ struct FrequencyTable {
 
 
 public:
-  FrequencyTable() : kmer_table(tablesize, 0), kmer_kmer_prob_table(tablesize * tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0), score_table(tablesize * tablesize, 0) {}
+  FrequencyTable() : kmer_table(tablesize, 0), kmer_ins_table(tablesize, 0), kmer_kmer_prob_table(tablesize * tablesize, 0), kmer_kmer_table(tablesize * tablesize, 0), score_table(tablesize * tablesize, 0) {}
   void countKmerFrequencies (
     const char* FASTAFileName,
     const char* SAMFileName,

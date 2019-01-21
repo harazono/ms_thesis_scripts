@@ -219,7 +219,7 @@ samfile.each do |line|
 	end
     #print "ref_aligned   : \"#{ref_aligned}\"\nquery_aligned : \"#{query_aligned}\"\n\n"
     i = 0
-	if sam_flag & 16 == 16 then
+	if (sam_flag & 16) == 16 then
        ref_aligned   = revcomp(ref_aligned)
        query_aligned = revcomp(query_aligned)
 	end

@@ -218,7 +218,7 @@ samfile.each do |line|
     end
 		i = i + 1
 	end
-  STDERR.print "finish proccesing #{sam.qname}\n"
+  #STDERR.print "finish proccesing #{sam.qname}\n"
 end
 
 
