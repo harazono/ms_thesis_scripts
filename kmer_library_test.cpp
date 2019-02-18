@@ -288,8 +288,8 @@ TEST_F(MyLibraryTest,localNormalization_Test6){
   ASSERT_TRUE(sum - 1.0 < 0.001 && 1.0 - sum < 0.001);
 }
   int main(int argc, char **argv) {
-  GDB_On_SEGV g(argv[0]);
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+      GDB_On_SEGV g(argv[0]);
+        ::testing::InitGoogleTest(&argc, argv);
+          return RUN_ALL_TESTS();
 }
 

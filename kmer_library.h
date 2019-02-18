@@ -145,7 +145,7 @@ public:
     kint = (kint * NUM_CHARS_FOR_BASES + b) % KMERINT_COUNT;
   }
   inline void unshift(Base b) {
-    kint = kint / NUM_CHARS_FOR_BASES + b * KMERINT_COUNT / 5;
+    kint = kint / NUM_CHARS_FOR_BASES + b * KMERINT_COUNT / NUM_CHARS_FOR_BASES;
   }
   inline bool hasgap() {
     bool flag = false;
