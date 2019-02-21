@@ -86,31 +86,52 @@ struct FrequencyTable {
   void countAlignment(
     const BString& ras,
     const BString& qas
-  {
-  )
+  ){
     MYASSERT_WMD("ras.size() must be qas.size()", ras.size() == qas.size(), DUMP(ras.size(), qas.size()));
     const size_t aligned_len = ras.size();
     if(aligned_len < KMERSIZE) return;
     KInt<2 * (KMERSIZE - 1)> cki;// context kmer index
     KInt<2>                  nki;// next    kmer index
-    for(size_t i = 0; i < KMERSIZE - 2; i++){
-      cki.ShiftIn(ras[i]);
-      cki.ShiftIn(qas[i]);
-    }
-    for(size_t i = KMERSIZE - 1; i <= aligned_len - KMERSIZE; i++){
-      cki.ShiftIn(ras[i - 1]);
-      cki.ShiftIn(qas[i - 1]);
-      nki.ShiftIn(ras[i]);
-      nki.ShiftIn(qas[i]);
-      c_table(cki)++;
-      kk(cki, nki)++;
+
+    if(KMERSIZE == 1){// there is no context.
+      cki.ShiftIn(char2Base('A'));
+      for(size_t i = KMERSIZE - 1; i <= aligned_len - KMERSIZE; i++){
+        nki.ShiftIn(ras[i]);
+        nki.ShiftIn(qas[i]);
+        c_table(cki)++;
+        kk(cki, nki)++;
+      }
+
+    }else{
+
+      if(KMERSIZE > 2){
+        for(size_t i = 0; i < KMERSIZE - 2; i++){
+          cki.ShiftIn(ras[i]);
+          cki.ShiftIn(qas[i]);
+        }
+      }
+      for(size_t i = KMERSIZE - 1; i <= aligned_len - KMERSIZE; i++){
+        cki.ShiftIn(ras[i - 1]);
+        cki.ShiftIn(qas[i - 1]);
+        nki.ShiftIn(ras[i]);
+        nki.ShiftIn(qas[i]);
+        c_table(cki)++;
+        kk(cki, nki)++;
+      }
     }
   }
 
-  void printTable(){
+  void printCTable(){
+    for(int i = 0; i < context_tablesize; i++){
+      fprintf(stdout, "%10d, ", c_table(i));
+    }
+    fprintf(stdout, "\n");
+  }
+
+  void printKKTable(){
     for(int j = 0; j < next_tablesize; j++){
       for(int i = 0; i < context_tablesize; i++){
-        fprintf(stdout, "%8d", kk(i, j));
+        fprintf(stdout, "%10d", kk(i, j));
         if(i != context_tablesize) fprintf(stdout, ", ");
       }
       fprintf(stdout, "\n");
@@ -120,7 +141,7 @@ struct FrequencyTable {
   void printProbTable(){
     for(int j = 0; j < next_tablesize; j++){
       for(int i = 0; i < context_tablesize; i++){
-        fprintf(stdout, "%8f", kkp(i, j));
+        fprintf(stdout, "%10f", kkp(i, j));
         if(i != context_tablesize) fprintf(stdout, ", ");
       }
       fprintf(stdout, "\n");
@@ -129,12 +150,13 @@ struct FrequencyTable {
   void printScoreTable(){
     for(int j = 0; j < next_tablesize; j++){
       for(int i = 0; i < context_tablesize; i++){
-        fprintf(stdout, "%8d", scr(i, j));
+        fprintf(stdout, "%10d", scr(i, j));
         if(i != context_tablesize) fprintf(stdout, ", ");
       }
       fprintf(stdout, "\n");
     }
   }
+
   size_t score_count = 1;// for printing progress report
   void scorerize(const int diff){
     vector<double>    kmer_kmer_prob_table(context_tablesize * next_tablesize, 0);
@@ -152,12 +174,16 @@ struct FrequencyTable {
           if(score_count % 10000 == 0) fprintf(stderr, "first roop : %'d / %'d\r", score_count, context_tablesize * next_tablesize);
           #pragma omp atomic
           score_count++;
-          if(c_table(i) != 0){
-            kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(c_table(i));//divide by context k-mer frequency.
+          if(KMERSIZE != 1){
+            if(c_table(i) != 0){
+              kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(c_table(i));//divide by context k-mer frequency.
+            }else{
+              kkp(i, j) = 0;
+            }
+            MYASSERT_WMD("prob must be in [0, 1]", kkp(i, j) <= 1.0 && kkp(i, j) >= 1.0, DUMP(kkp(i, j)));
           }else{
-            kkp(i, j) = 0;
+            kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(c_table(0));//divide by context k-mer frequency.
           }
-          MYASSERT_WMD("prob must be in [0, 1]", kkp(i, j) <= 1.0 && kkp(i, j) >= 1.0, DUMP(kkp(i, j)));
         }
       }
       fprintf(stderr, "first roop : %'d / %'d                         \r", score_count, context_tablesize * next_tablesize);
@@ -260,9 +286,14 @@ public:
       outputAsBinaryTable(binaryOutputFileName);
     }
     if(outputInCSV) {
-      //printKKPTable();
-      //printKKTable();
-      //printscoretable();
+      printCTable();
+      fprintf(stdout, "\n");
+      printKKTable();
+      fprintf(stdout, "\n");
+      printProbTable();
+      fprintf(stdout, "\n");
+      printScoreTable();
+      fprintf(stdout, "\n");
     }
   }
 
