@@ -20,9 +20,18 @@ const uint NUM_CHARS_FOR_BASES = 5;
 
 constexpr ulong ipow(ulong i, uint N)
 {
-  return N <= 1 ? i : i * ipow(i, N - 1);
+  return N == 0 ? 1 : N <= 1 ? i : i * ipow(i, N - 1);
 }
 
+/*
+ulong ipow(ulong i, uint N){
+  ulong retval = 1;
+  if(N <= 0) return retval;
+  if(N >  0){
+    retval = ipow(i, N - 1);
+  }
+}
+*/
 const Base GAP_BASE = 4;
 inline Base char2Base(char inch)
 {
@@ -223,6 +232,7 @@ inline CIGAROPS parseCIGARString(const std::string& cigarString) {
       std::exit(2);
     }
     char op = s[i];
+    std::cerr << num << op << std::endl;
     switch(op) {
     case 'I':
     case 'D':
@@ -240,6 +250,7 @@ inline CIGAROPS parseCIGARString(const std::string& cigarString) {
     }
     retval.push_back(CIGAROp(op, num));
   }
+  std::cerr << std::endl;
   return retval;
 }
 

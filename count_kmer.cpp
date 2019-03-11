@@ -94,7 +94,7 @@ struct FrequencyTable {
     KInt<2>                  nki;// next    kmer index
 
     if(KMERSIZE == 1){// there is no context.
-      cki.ShiftIn(char2Base('A'));
+      //cki.ShiftIn(char2Base('A'));
       for(size_t i = KMERSIZE - 1; i <= aligned_len - KMERSIZE; i++){
         nki.ShiftIn(ras[i]);
         nki.ShiftIn(qas[i]);
@@ -258,15 +258,14 @@ public:
 
 
       // get aligned sequence at here
+      //cerr << record.cigar.c_str() << endl;
       const CIGAROPS cops     = parseCIGARString(record.cigar);
-
       BString refBS           = multiFASTA.at(record.rname);
       BString queryBS         = String2BString(record.seq);
       const int refStartPos   = record.pos;
       const int queryStartPos = 0; // generateAlignmentSequencesFromCIGARAndSeqs() will manege first Softclip / Hardclip
       BString ras, qas;
       generateAlignmentSequencesFromCIGARAndSeqs(refBS, queryBS, cops, refStartPos, queryStartPos, ras, qas);
-
       // if record flag has revcomp flag, modify aligned reference sequence and read sequence.
       if((record.flag & 16) != 16){
         revCompBString(ras);
@@ -280,7 +279,7 @@ public:
     }
     cerr << recordCount << " processed\n";
     cerr << "Done." << endl;
-    //printKKTable();
+    
     scorerize(100);
     if(!binaryOutputFileName.empty()) {
       outputAsBinaryTable(binaryOutputFileName);
@@ -290,8 +289,8 @@ public:
       fprintf(stdout, "\n");
       printKKTable();
       fprintf(stdout, "\n");
-      printProbTable();
-      fprintf(stdout, "\n");
+      //printProbTable();
+      //fprintf(stdout, "\n");
       printScoreTable();
       fprintf(stdout, "\n");
     }
