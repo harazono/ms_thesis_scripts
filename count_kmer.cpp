@@ -31,28 +31,28 @@ struct FrequencyTable {
   static const size_t next_tablesize    = ipow(5, 2);
   typedef int Frequency;
   typedef int Score;
-  vector<Frequency> kmer_table; ///< context table.
+  vector<Frequency> context_table; ///< context table.
   vector<Frequency> kmer_kmer_table; ///< The first dimension is reference, the second is query.
   vector<double>    kmer_kmer_prob_table;
   vector<Score>     score_table;
   inline Frequency& c_table(size_t c) {
     MYASSERT_WMD("Out of range (c)", c < context_tablesize, DUMP(c));
-    return kmer_table[c];
+    return context_table[c];
   }
-  inline Frequency& kk(size_t r, size_t q) {
-    MYASSERT_WMD("Out of range (r)", r < context_tablesize, DUMP(r));
-    MYASSERT_WMD("Out of range (q)", q < next_tablesize, DUMP(q));
-    return kmer_kmer_table[r * context_tablesize + q];
+  inline Frequency& kk(size_t c, size_t n) {
+    MYASSERT_WMD("Out of range (c)", c < context_tablesize, DUMP(c));
+    MYASSERT_WMD("Out of range (n)", n < next_tablesize, DUMP(n));
+    return kmer_kmer_table[c * next_tablesize + n];
   }
-  inline double&   kkp(size_t r, size_t q) {
-    MYASSERT_WMD("Out of range (r)", r < context_tablesize, DUMP(r));
-    MYASSERT_WMD("Out of range (q)", q < next_tablesize, DUMP(q));
-    return kmer_kmer_prob_table[r * context_tablesize + q];
+  inline double& kkp(size_t c, size_t n) {
+    MYASSERT_WMD("Out of range (c)", c < context_tablesize, DUMP(c));
+    MYASSERT_WMD("Out of range (n)", n < next_tablesize, DUMP(n));
+    return kmer_kmer_prob_table[c * next_tablesize + n];
   }
-  inline Score&    scr(size_t r, size_t q) {
-    MYASSERT_WMD("Out of range (r)", r < context_tablesize, DUMP(r));
-    MYASSERT_WMD("Out of range (q)", q < next_tablesize, DUMP(q));
-    return score_table[r * context_tablesize + q];
+  inline Score& scr(size_t c, size_t n) {
+    MYASSERT_WMD("Out of range (c)", c < context_tablesize, DUMP(c));
+    MYASSERT_WMD("Out of range (n)", n < next_tablesize, DUMP(n));
+    return score_table[c * next_tablesize + n];
   }
 
   void outputAsBinaryTable(const string& outputFileName)
@@ -159,46 +159,43 @@ struct FrequencyTable {
 
   size_t score_count = 1;// for printing progress report
   void scorerize(const int diff){
-    vector<double>    kmer_kmer_prob_table(context_tablesize * next_tablesize, 0);
+    /*vector<double> kmer_kmer_prob_table(context_tablesize * next_tablesize, 0);
     auto kkp = [&kmer_kmer_prob_table](size_t r, size_t q) -> double& {
       MYASSERT_WMD("Out of range (r)", r < context_tablesize, DUMP(r));
       MYASSERT_WMD("Out of range (q)", q < next_tablesize, DUMP(q));
       return kmer_kmer_prob_table[r * context_tablesize + q];
-    };
+    };*/
 
     #pragma omp parallel num_threads(16)
     {
       #pragma omp for
-      for(int i = 0; i < context_tablesize; i++){
-        for(int j = 0; j < next_tablesize; j++){
+      for(int c = 0; c < context_tablesize; c++){
+        for(int n = 0; n < next_tablesize; n++){
           if(score_count % 10000 == 0) fprintf(stderr, "first roop : %'d / %'d\r", score_count, context_tablesize * next_tablesize);
           #pragma omp atomic
           score_count++;
-          if(KMERSIZE != 1){
-            if(c_table(i) != 0){
-              kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(c_table(i));//divide by context k-mer frequency.
-            }else{
-              kkp(i, j) = 0;
-            }
-            MYASSERT_WMD("prob must be in [0, 1]", kkp(i, j) <= 1.0 && kkp(i, j) >= 1.0, DUMP(kkp(i, j)));
+          if(c_table(c) != 0){
+            kkp(c, n) = static_cast<double>(kk(c, n)) / c_table(c);//divide by context k-mer frequency.
           }else{
-            kkp(i, j) = static_cast<double>(kk(i, j)) / static_cast<double>(c_table(0));//divide by context k-mer frequency.
+            kkp(c, n) = 0.0;
           }
+          //fprintf(stderr, "kk(c, n) = %d, c_table(c) = %d, kkp(c, n) = %f\n", kk(c, n), c_table(c), kkp(c, n));
+          MYASSERT_WMD("prob must be in [0, 1]", kkp(c, n) <= 1.0 && kkp(c, n) >= 0.0, DUMP(kkp(c, n)));
         }
       }
       fprintf(stderr, "first roop : %'d / %'d                         \r", score_count, context_tablesize * next_tablesize);
       score_count = 1;
     }
     score_count = 0;
-    for(int i = 0; i < context_tablesize; i++){
-      for(int j = 0; j < next_tablesize; j++){
+    for(int c = 0; c < context_tablesize; c++){
+      for(int n = 0; n < next_tablesize; n++){
         if(score_count % 10000 == 0) fprintf(stderr, "second  roop : %'d / %'d                                               \r", score_count, context_tablesize * next_tablesize) ;
         #pragma omp atomic
         score_count++;
-        if(kkp(j, i) > 0.0){
-          scr(j, i) = diff + static_cast<int>(round(100 * log10(kkp(j, i))));
+        if(kkp(c, n) > 0.0){
+          scr(c, n) = diff + static_cast<int>(round(100 * log10(kkp(c, n))));
         }else{
-          scr(j, i) = diff + -1 * ipow(2, 10);
+          scr(c, n) = diff + -1 * ipow(2, 10);
         }
       }
     }
@@ -207,7 +204,7 @@ struct FrequencyTable {
 
 
 public:
-  FrequencyTable() : kmer_table(context_tablesize, 0), kmer_kmer_prob_table(context_tablesize * next_tablesize, 0), kmer_kmer_table(context_tablesize * next_tablesize, 0), score_table(context_tablesize * next_tablesize, 0) {}
+  FrequencyTable() : context_table(context_tablesize, 0), kmer_kmer_table(context_tablesize * next_tablesize, 0), kmer_kmer_prob_table(context_tablesize * next_tablesize, 0), score_table(context_tablesize * next_tablesize, 0) {}
   void countKmerFrequencies (
     const char* FASTAFileName,
     const char* SAMFileName,
@@ -231,6 +228,12 @@ public:
       fprintf(stderr, "ERROR: Cannot open SAM file '%s'\n", SAMFileName);
       exit(2);
     }
+/*
+    fprintf(stderr, "context_tablesize = %d, next_tablesize = %d\n", context_tablesize, next_tablesize);
+    fprintf(stderr, "kmer_table.size()           = %d\n", kmer_table.size());
+    fprintf(stderr, "kmer_kmer_table.size()      = %d\n", kmer_kmer_table.size());
+    fprintf(stderr, "kmer_kmer_prob_table.size() = %d\n", kmer_kmer_prob_table.size());
+    */
 
     SAMRecord record;
     size_t recordCount = 0;
@@ -256,7 +259,6 @@ public:
         exit(2);
       }
 
-
       // get aligned sequence at here
       //cerr << record.cigar.c_str() << endl;
       const CIGAROPS cops     = parseCIGARString(record.cigar);
@@ -279,7 +281,7 @@ public:
     }
     cerr << recordCount << " processed\n";
     cerr << "Done." << endl;
-    
+
     scorerize(100);
     if(!binaryOutputFileName.empty()) {
       outputAsBinaryTable(binaryOutputFileName);
@@ -289,8 +291,8 @@ public:
       fprintf(stdout, "\n");
       printKKTable();
       fprintf(stdout, "\n");
-      //printProbTable();
-      //fprintf(stdout, "\n");
+      printProbTable();
+      fprintf(stdout, "\n");
       printScoreTable();
       fprintf(stdout, "\n");
     }

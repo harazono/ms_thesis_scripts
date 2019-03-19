@@ -1,5 +1,5 @@
 DEPENDS := .depend.mk
-CXXFLAGS := -g -Wall -O0 -DNDEBUG -std=c++11 -fopenmp -lgomp
+CXXFLAGS := -g -Wall -O0 -DNDEBUG -std=c++11 -lgomp -fopenmp#-fsanitize=address -fno-omit-frame-pointer
 # CXXFLAGS := -g -Wall -O0 -std=c++11 -fopenmp -lgomp
 GTESTFLAGS := -lgtest -lpthread
 SOURCES := count_kmer.cpp
