@@ -232,7 +232,7 @@ inline CIGAROPS parseCIGARString(const std::string& cigarString) {
       std::exit(2);
     }
     char op = s[i];
-    std::cerr << num << op << std::endl;
+    //std::cerr << num << op << std::endl;
     switch(op) {
     case 'I':
     case 'D':
@@ -250,7 +250,7 @@ inline CIGAROPS parseCIGARString(const std::string& cigarString) {
     }
     retval.push_back(CIGAROp(op, num));
   }
-  std::cerr << std::endl;
+  //std::cerr << std::endl;
   return retval;
 }
 
